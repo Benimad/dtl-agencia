@@ -1,0 +1,391 @@
+/* ═══════════════════════════════════════════════════════════════
+   Secciones — bloques grandes de página.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── hero ── */
+.hero {
+  padding: 56px 0 40px;
+  position: relative;
+}
+.circulo-central {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  width: min(760px, 120vw);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border: 1px solid rgba(238, 243, 238, 0.07);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.circulo-central::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  width: 1px;
+  height: 100%;
+  background: rgba(238, 243, 238, 0.06);
+}
+.hero h1 {
+  font-weight: 600;
+  font-size: clamp(3.2rem, 13vw, 10rem);
+  margin: 18px 0 0;
+  background: linear-gradient(178deg, var(--cal) 42%, rgba(238, 243, 238, 0.4));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero h1 em {
+  font-style: italic;
+  font-weight: 500;
+  display: block;
+  background: none;
+  -webkit-text-fill-color: initial;
+  color: var(--cesped-luz);
+}
+.hero-pie {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 36px;
+  align-items: end;
+  margin-top: 28px;
+}
+.hero-pie p {
+  font-size: 1.06rem;
+  max-width: 46ch;
+}
+.acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.marcador {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 46px;
+  overflow: hidden;
+}
+.marcador div {
+  padding: 22px 24px;
+  border-right: 1px solid var(--glass-borde);
+}
+.marcador div:last-child {
+  border-right: 0;
+}
+.marcador strong {
+  display: block;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 2.6rem;
+  line-height: 1;
+}
+.marcador span {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tenue);
+}
+
+/* ── cabecera de páginas interiores ── */
+.pagina-cabecera {
+  padding: 44px 0 30px;
+  position: relative;
+}
+.pagina-cabecera h1 {
+  font-size: clamp(2.6rem, 9vw, 6.4rem);
+  margin: 14px 0 0;
+  background: linear-gradient(178deg, var(--cal) 46%, rgba(238, 243, 238, 0.45));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.pagina-cabecera .lead {
+  margin: 22px 0 0;
+  font-size: 1.05rem;
+  color: var(--tenue);
+  max-width: 56ch;
+}
+.migas {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  margin-bottom: 18px;
+}
+.migas a {
+  text-decoration: none;
+  transition: color 0.25s;
+}
+.migas a:hover {
+  color: var(--cal);
+}
+.migas span[aria-current] {
+  color: var(--cesped-luz);
+}
+
+/* ── banda led ── */
+.led {
+  margin: 64px 0 0;
+  border-top: 1px solid var(--glass-borde);
+  border-bottom: 1px solid var(--glass-borde);
+  background: linear-gradient(90deg, rgba(30, 94, 74, 0.22), rgba(34, 52, 122, 0.22));
+  overflow: hidden;
+  padding: 14px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.led-pista {
+  display: flex;
+  width: max-content;
+  animation: corre 38s linear infinite;
+}
+.led-pista span {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 22px;
+  white-space: nowrap;
+  color: rgba(238, 243, 238, 0.82);
+}
+.led-pista span i {
+  font-style: normal;
+  color: var(--ambar);
+}
+@keyframes corre {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── clubes ── */
+.clubes {
+  padding: 34px 0 0;
+}
+.clubes-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── rejillas ── */
+.cartelera {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+  gap: 20px;
+}
+.servicios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 18px;
+}
+.mercados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+.testimonios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+/* ── candidatura ── */
+.candidatura {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 44px;
+  padding: 44px 38px;
+  align-items: start;
+}
+.candidatura .lead {
+  color: var(--tenue);
+  margin-top: 16px;
+}
+
+/* ── contacto ── */
+.contacto {
+  padding: 44px 38px;
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  gap: 44px;
+  align-items: center;
+}
+.contacto h2 {
+  font-size: clamp(2.6rem, 6.4vw, 4.6rem);
+}
+.contacto .lead {
+  margin-top: 16px;
+  color: var(--tenue);
+  max-width: 38ch;
+}
+
+/* ── ficha de jugador (página) ── */
+.ficha {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 26px;
+  align-items: start;
+}
+.ficha img {
+  border-radius: 14px;
+  width: 100%;
+  height: auto;
+}
+.ficha h3,
+.ficha h1 {
+  font-size: 2.6rem;
+  margin-bottom: 4px;
+}
+.ficha .club-linea {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  margin-bottom: 20px;
+}
+.ficha-pagina {
+  padding: 32px;
+  gap: 40px;
+}
+.ficha-pagina h1 {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+}
+/* Con pocos datos publicados, que ocupen el ancho en vez de dejar huecos. */
+.ficha-pagina .datos {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.ficha-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* ── cinta de llamada a la acción ── */
+.cinta-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding: 38px 36px;
+  background: linear-gradient(120deg, rgba(30, 94, 74, 0.28), rgba(34, 52, 122, 0.24));
+}
+.cinta-cta h2 {
+  font-size: clamp(1.9rem, 4.4vw, 3rem);
+  max-width: 18ch;
+}
+.cinta-cta p {
+  color: var(--tenue);
+  max-width: 40ch;
+  margin: 12px 0 0;
+  font-size: 0.95rem;
+}
+
+/* ── texto legal ── */
+.prosa {
+  padding: 40px 38px;
+  max-width: 78ch;
+}
+.prosa h1 {
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  margin-bottom: 8px;
+}
+.prosa h2 {
+  font-family: var(--body);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.4;
+  margin: 26px 0 8px;
+  text-transform: none;
+}
+.prosa p,
+.prosa li {
+  font-size: 0.9rem;
+  color: var(--tenue);
+  line-height: 1.7;
+}
+.prosa ul {
+  padding-inline-start: 18px;
+}
+.prosa .actualizado {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  margin-bottom: 24px;
+}
+
+/* ── 404 ── */
+.perdido {
+  min-height: 62vh;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 18px;
+  padding: 60px 0;
+}
+.perdido .codigo {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: clamp(5rem, 22vw, 12rem);
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(238, 243, 238, 0.35);
+}
+
+@media (max-width: 900px) {
+  .hero-pie {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .acciones {
+    justify-content: flex-start;
+  }
+  .marcador {
+    grid-template-columns: 1fr;
+  }
+  .marcador div {
+    border-right: 0;
+    border-bottom: 1px solid var(--glass-borde);
+  }
+  .marcador div:last-child {
+    border-bottom: 0;
+  }
+  .contacto,
+  .candidatura {
+    grid-template-columns: 1fr;
+    padding: 32px 24px;
+    gap: 30px;
+  }
+  .ficha {
+    grid-template-columns: 1fr;
+  }
+  .ficha img {
+    max-width: 320px;
+  }
+  .cinta-cta,
+  .prosa {
+    padding: 30px 24px;
+  }
+}
+@media (max-width: 560px) {
+  .wrap {
+    padding: 0 18px;
+  }
+}

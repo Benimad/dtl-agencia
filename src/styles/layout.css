@@ -1,0 +1,301 @@
+/* ═══════════════════════════════════════════════════════════════
+   Layout — cabecera, navegación, pie y botón flotante.
+   ═══════════════════════════════════════════════════════════════ */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 12px 0;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 12px 10px 18px;
+  border-radius: 999px;
+}
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  margin-right: auto;
+}
+.marca img {
+  width: 50px;
+  height: auto;
+  mix-blend-mode: screen;
+  filter: contrast(1.15);
+}
+.marca span {
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.1em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+.nav nav {
+  display: flex;
+  gap: 22px;
+}
+.nav nav a {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--tenue);
+  transition: color 0.25s;
+}
+.nav nav a:hover {
+  color: var(--cal);
+}
+.nav nav a[aria-current="page"] {
+  color: var(--cal);
+}
+.nav nav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -7px;
+  height: 1px;
+  background: var(--cesped-luz);
+}
+
+.idiomas {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(238, 243, 238, 0.05);
+  border: 1px solid var(--glass-borde);
+}
+.idiomas a {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  padding: 7px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+.idiomas a:hover {
+  color: var(--cal);
+}
+.idiomas a[aria-current="true"] {
+  background: var(--cesped);
+  color: #fff;
+}
+
+/* ── menú móvil ── */
+.hamburguesa {
+  display: none;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--glass-borde);
+  background: rgba(238, 243, 238, 0.04);
+  color: var(--cal);
+  cursor: pointer;
+  padding: 0;
+  place-items: center;
+}
+.hamburguesa:hover {
+  border-color: rgba(238, 243, 238, 0.4);
+}
+.hamburguesa i {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 0.3s, opacity 0.2s;
+}
+.hamburguesa i + i {
+  margin-top: 4px;
+}
+.hamburguesa[aria-expanded="true"] i:nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg);
+}
+.hamburguesa[aria-expanded="true"] i:nth-child(2) {
+  opacity: 0;
+}
+.hamburguesa[aria-expanded="true"] i:nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg);
+}
+
+.panel-movil {
+  display: none;
+  margin-top: 10px;
+  padding: 18px;
+  border-radius: 22px;
+  flex-direction: column;
+  gap: 4px;
+}
+.panel-movil.abierto {
+  display: flex;
+}
+.panel-movil a {
+  padding: 13px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  transition: background 0.25s, color 0.25s;
+}
+.panel-movil a:hover,
+.panel-movil a[aria-current="page"] {
+  background: rgba(238, 243, 238, 0.06);
+  color: var(--cal);
+}
+.panel-movil .btn {
+  margin-top: 10px;
+  color: #fff;
+}
+
+/* ── pie ── */
+footer {
+  padding: 46px 0;
+  border-top: 1px solid var(--glass-borde);
+  margin-top: 40px;
+}
+.pie-rejilla {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 40px;
+  padding-bottom: 34px;
+}
+.pie-rejilla h4 {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  margin: 0 0 14px;
+}
+.pie-rejilla ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.pie-rejilla a {
+  text-decoration: none;
+  font-size: 0.92rem;
+  color: var(--tenue);
+  transition: color 0.25s;
+}
+.pie-rejilla a:hover {
+  color: var(--cal);
+}
+.pie-marca p {
+  font-size: 0.92rem;
+  color: var(--tenue);
+  max-width: 34ch;
+  margin: 14px 0 0;
+}
+.pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 26px;
+  border-top: 1px solid var(--glass-borde);
+}
+.pie p {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tenue);
+}
+.pie-legal {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.pie-legal a {
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  transition: color 0.25s;
+}
+.pie-legal a:hover {
+  color: var(--cal);
+}
+
+/* ── whatsapp flotante ── */
+.flotante {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  background: var(--cesped);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.9);
+  transition: transform 0.25s, background 0.25s;
+}
+.flotante:hover {
+  background: var(--cesped-luz);
+  transform: translateY(-3px);
+}
+.flotante svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 980px) {
+  .nav nav,
+  .nav .btn {
+    display: none;
+  }
+  .hamburguesa {
+    display: grid;
+  }
+}
+@media (max-width: 760px) {
+  .pie-rejilla {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+@media (max-width: 560px) {
+  .flotante span {
+    display: none;
+  }
+  .flotante {
+    padding: 16px;
+  }
+  .marca span {
+    font-size: 0.95rem;
+  }
+}

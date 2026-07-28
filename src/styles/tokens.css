@@ -1,0 +1,37 @@
+/* ═══════════════════════════════════════════════════════════════
+   Tokens — la paleta y la tipografía de DTL Agencia.
+   Cambiar un valor aquí lo cambia en todo el sitio.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* color */
+  --noche: #06090b;
+  --cesped: #1e5e4a;
+  --cesped-luz: #3ea882;
+  --fichaje: #22347a;
+  --cal: #eef3ee;
+  --ambar: #d8a24a;
+  --alerta: #e0685f;
+
+  /* cristal */
+  --glass: rgba(238, 243, 238, 0.055);
+  --glass-borde: rgba(238, 243, 238, 0.14);
+  --tenue: rgba(238, 243, 238, 0.58);
+
+  /* tipografía */
+  --display: var(--fuente-display), "Iowan Old Style", Georgia, serif;
+  --body: var(--fuente-body), system-ui, sans-serif;
+  --mono: var(--fuente-mono), ui-monospace, monospace;
+  --arabe: var(--fuente-arabe), var(--fuente-body), system-ui, sans-serif;
+  --arabe-display: var(--fuente-arabe-display), var(--display);
+
+  /* medidas */
+  --max: 1180px;
+  --radio: 18px;
+  --radio-chico: 10px;
+
+  /* profundidad */
+  --sombra-cristal: 0 24px 60px -30px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --sombra-alta: 0 40px 70px -34px rgba(0, 0, 0, 1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
