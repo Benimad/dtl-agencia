@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { NextResponse } from 'next/server';
-import { dirSubidas } from '@/lib/db';
+import { asegurarBase, dirSubidas } from '@/lib/db';
 import { TIPOS_MIME } from '@/lib/imagen';
 
 export const runtime = 'nodejs';
@@ -22,6 +22,9 @@ export async function GET(
   const extension = path.extname(nombre).toLowerCase();
   const tipo = TIPOS_MIME[extension];
   if (!tipo) return new NextResponse('No encontrado', { status: 404 });
+
+  // Instancia recién arrancada: siembra la base para que las fotos existan.
+  asegurarBase();
 
   const base = dirSubidas();
   const ruta = path.join(base, nombre);

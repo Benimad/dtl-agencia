@@ -15,6 +15,15 @@ import type {
 export * from './esquema';
 export { dirSubidas, ErrorSoloLectura, almacenamientoPersistente } from './almacen';
 
+/**
+ * Garantiza que la base existe. En serverless cada instancia arranca vacía:
+ * si la primera petición que le llega es la de una foto, sin esto no habría
+ * nada que servir.
+ */
+export function asegurarBase(): void {
+  leerBD();
+}
+
 /* ── utilidades ───────────────────────────────────────────────── */
 
 const porOrden = <T extends { orden: number }>(a: T, b: T) => a.orden - b.orden;
