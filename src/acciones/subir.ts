@@ -3,7 +3,7 @@ import 'server-only';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { DIR_SUBIDAS, type Imagen } from '@/lib/db';
+import { dirSubidas, type Imagen } from '@/lib/db';
 import { EXTENSIONES, leerImagen } from '@/lib/imagen';
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -27,9 +27,10 @@ export async function guardarFoto(archivo: File): Promise<Imagen> {
     throw new ErrorSubida('Solo se aceptan imágenes JPG, PNG o WebP.');
   }
 
-  fs.mkdirSync(DIR_SUBIDAS, { recursive: true });
+  const destino = dirSubidas();
+  fs.mkdirSync(destino, { recursive: true });
   const nombre = `${randomUUID()}${EXTENSIONES[leida.formato]}`;
-  fs.writeFileSync(path.join(DIR_SUBIDAS, nombre), buf);
+  fs.writeFileSync(path.join(destino, nombre), buf);
 
   return { archivo: nombre, ancho: leida.ancho, alto: leida.alto };
 }
@@ -37,7 +38,7 @@ export async function guardarFoto(archivo: File): Promise<Imagen> {
 /** Borra una foto del disco. Da igual si ya no está. */
 export function borrarFoto(imagen: Imagen | null) {
   if (!imagen) return;
-  const ruta = path.join(DIR_SUBIDAS, path.basename(imagen.archivo));
+  const ruta = path.join(dirSubidas(), path.basename(imagen.archivo));
   try {
     fs.rmSync(ruta, { force: true });
   } catch (error) {

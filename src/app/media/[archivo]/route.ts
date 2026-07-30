@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { NextResponse } from 'next/server';
-import { DIR_SUBIDAS } from '@/lib/db';
+import { dirSubidas } from '@/lib/db';
 import { TIPOS_MIME } from '@/lib/imagen';
 
 export const runtime = 'nodejs';
@@ -23,8 +23,9 @@ export async function GET(
   const tipo = TIPOS_MIME[extension];
   if (!tipo) return new NextResponse('No encontrado', { status: 404 });
 
-  const ruta = path.join(DIR_SUBIDAS, nombre);
-  if (!ruta.startsWith(DIR_SUBIDAS) || !fs.existsSync(ruta)) {
+  const base = dirSubidas();
+  const ruta = path.join(base, nombre);
+  if (!ruta.startsWith(base) || !fs.existsSync(ruta)) {
     return new NextResponse('No encontrado', { status: 404 });
   }
 

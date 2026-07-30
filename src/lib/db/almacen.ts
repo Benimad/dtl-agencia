@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { VERSION_BD, type BaseDatos } from './esquema';
 import { baseInicial } from './semilla';
@@ -9,27 +10,69 @@ import { baseInicial } from './semilla';
    (archivo temporal + rename) para que un fallo a mitad de
    escritura no deje la base a medias.
 
-   Dónde escribe, por orden:
-     1. DATA_DIR, si está definida
-     2. /tmp, en plataformas sin disco propio (Vercel y similares)
-     3. ./data, en local y en cualquier servidor normal
-
-   Y si el disco no deja escribir, no se cae el sitio: la web sigue
-   sirviendo el contenido en memoria y el panel avisa al guardar.
+   Dónde escribe: se prueba de verdad, no se adivina por variables
+   de entorno. Se intenta crear el directorio y, si el sistema de
+   archivos no deja (serverless con /var/task de solo lectura), se
+   cae al temporal del sistema. Si tampoco, todo sigue en memoria y
+   el panel avisa al guardar — pero la web nunca se cae.
    ══════════════════════════════════════════════════════════════ */
 
-/** Plataformas serverless donde el sistema de archivos es de solo lectura. */
-const SIN_DISCO = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const CARPETA_TEMPORAL = path.join(os.tmpdir(), 'dtl-agencia-datos');
 
-function resolverDirDatos(): string {
-  if (process.env.DATA_DIR) return path.resolve(process.env.DATA_DIR);
-  if (SIN_DISCO) return path.join('/tmp', 'dtl-agencia-datos');
-  return path.join(process.cwd(), 'data');
+function candidatos(): string[] {
+  const lista = [
+    process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : null,
+    path.join(process.cwd(), 'data'),
+    CARPETA_TEMPORAL,
+  ];
+  return lista.filter((d): d is string => Boolean(d));
 }
 
-export const DIR_DATOS = resolverDirDatos();
-export const DIR_SUBIDAS = path.join(DIR_DATOS, 'uploads');
-const ARCHIVO_BD = path.join(DIR_DATOS, 'db.json');
+function sePuedeEscribir(dir: string): boolean {
+  try {
+    fs.mkdirSync(path.join(dir, 'uploads'), { recursive: true });
+    fs.accessSync(dir, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+let dirElegido: string | null = null;
+let persistente = false;
+
+/** Primer directorio de la lista en el que el servidor pueda escribir de verdad. */
+function dirDatos(): string {
+  if (dirElegido) return dirElegido;
+
+  for (const dir of candidatos()) {
+    if (sePuedeEscribir(dir)) {
+      dirElegido = dir;
+      // El temporal del sistema se borra solo: sirve para que el sitio
+      // funcione, pero no cuenta como almacenamiento de verdad.
+      persistente = dir !== CARPETA_TEMPORAL;
+      if (!persistente) {
+        console.warn(
+          `[bd] sin disco propio; usando ${dir}. Los cambios del panel no sobrevivirán a un despliegue.`,
+        );
+      }
+      return dir;
+    }
+  }
+
+  console.warn('[bd] ningún directorio escribible; el contenido se sirve en memoria.');
+  dirElegido = CARPETA_TEMPORAL;
+  persistente = false;
+  return dirElegido;
+}
+
+export function dirSubidas(): string {
+  return path.join(dirDatos(), 'uploads');
+}
+
+function archivoBD(): string {
+  return path.join(dirDatos(), 'db.json');
+}
 
 /** El disco no admite escrituras: seguimos en memoria y lo decimos al guardar. */
 export class ErrorSoloLectura extends Error {
@@ -47,11 +90,12 @@ let cache: { datos: BaseDatos; mtime: number } | null = null;
 let enMemoria: BaseDatos | null = null;
 
 function escribir(datos: BaseDatos) {
-  fs.mkdirSync(DIR_SUBIDAS, { recursive: true });
-  const temporal = `${ARCHIVO_BD}.${randomUUID()}.tmp`;
+  const archivo = archivoBD();
+  fs.mkdirSync(dirSubidas(), { recursive: true });
+  const temporal = `${archivo}.${randomUUID()}.tmp`;
   fs.writeFileSync(temporal, JSON.stringify(datos, null, 2), 'utf8');
-  fs.renameSync(temporal, ARCHIVO_BD);
-  cache = { datos, mtime: fs.statSync(ARCHIVO_BD).mtimeMs };
+  fs.renameSync(temporal, archivo);
+  cache = { datos, mtime: fs.statSync(archivo).mtimeMs };
 }
 
 /** Intenta persistir; si el disco no deja, se queda en memoria. */
@@ -62,10 +106,7 @@ function escribirSiSePuede(datos: BaseDatos): boolean {
     return true;
   } catch (error) {
     if (!enMemoria) {
-      console.warn(
-        `[bd] no se puede escribir en ${DIR_DATOS}; el contenido se sirve en memoria.`,
-        error,
-      );
+      console.warn(`[bd] no se puede escribir en ${dirDatos()}:`, error);
     }
     enMemoria = datos;
     return false;
@@ -74,25 +115,27 @@ function escribirSiSePuede(datos: BaseDatos): boolean {
 
 /** Lee la base. La deja en memoria y solo vuelve al disco si el archivo cambió. */
 export function leerBD(): BaseDatos {
+  const archivo = archivoBD();
+
   let existe = false;
   try {
-    existe = fs.existsSync(ARCHIVO_BD);
+    existe = fs.existsSync(archivo);
   } catch {
     existe = false;
   }
 
   if (!existe) {
     if (enMemoria) return enMemoria;
-    const inicial = baseInicial(DIR_SUBIDAS);
+    const inicial = baseInicial(dirSubidas());
     escribirSiSePuede(inicial);
     return enMemoria ?? inicial;
   }
 
-  const mtime = fs.statSync(ARCHIVO_BD).mtimeMs;
+  const mtime = fs.statSync(archivo).mtimeMs;
   if (cache && cache.mtime === mtime) return cache.datos;
 
   try {
-    const datos = JSON.parse(fs.readFileSync(ARCHIVO_BD, 'utf8')) as BaseDatos;
+    const datos = JSON.parse(fs.readFileSync(archivo, 'utf8')) as BaseDatos;
     const migrada = migrar(datos);
     cache = { datos: migrada, mtime };
     return migrada;
@@ -100,13 +143,13 @@ export function leerBD(): BaseDatos {
     // Antes de reiniciar nada, guardamos el archivo roto: puede tener datos
     // reales que la agencia quiera recuperar a mano.
     try {
-      const copia = `${ARCHIVO_BD}.roto-${Date.now()}`;
-      fs.copyFileSync(ARCHIVO_BD, copia);
+      const copia = `${archivo}.roto-${Date.now()}`;
+      fs.copyFileSync(archivo, copia);
       console.error(`[bd] db.json ilegible, copiado a ${copia}:`, error);
     } catch {
       console.error('[bd] db.json ilegible y no se ha podido copiar:', error);
     }
-    const inicial = baseInicial(DIR_SUBIDAS);
+    const inicial = baseInicial(dirSubidas());
     escribirSiSePuede(inicial);
     return enMemoria ?? inicial;
   }
@@ -120,20 +163,14 @@ export function escribirBD<T>(fn: (bd: BaseDatos) => T): T {
   return resultado;
 }
 
-/** ¿Este servidor puede guardar cambios? Lo usa el panel para avisar. */
+/** ¿Este servidor guarda los cambios de verdad? Lo usa el panel para avisar. */
 export function almacenamientoPersistente(): boolean {
-  if (SIN_DISCO && !process.env.DATA_DIR) return false;
-  try {
-    fs.mkdirSync(DIR_SUBIDAS, { recursive: true });
-    fs.accessSync(DIR_DATOS, fs.constants.W_OK);
-    return true;
-  } catch {
-    return false;
-  }
+  dirDatos();
+  return persistente;
 }
 
 function migrar(datos: BaseDatos): BaseDatos {
-  const base = baseInicial(DIR_SUBIDAS);
+  const base = baseInicial(dirSubidas());
   // Rellena lo que falte si la base viene de una versión anterior.
   return {
     version: VERSION_BD,
