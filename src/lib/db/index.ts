@@ -13,7 +13,7 @@ import type {
 } from './esquema';
 
 export * from './esquema';
-export { DIR_SUBIDAS } from './almacen';
+export { DIR_SUBIDAS, ErrorSoloLectura, almacenamientoPersistente } from './almacen';
 
 /* ── utilidades ───────────────────────────────────────────────── */
 

@@ -3,7 +3,12 @@
 import { redirect } from 'next/navigation';
 import { cifrarClave, claveDebil, verificarClave } from '@/lib/auth/clave';
 import { cerrarSesion, iniciarSesion } from '@/lib/auth/sesion';
-import { buscarUsuarioPorEmail, contarUsuarios, crearUsuario } from '@/lib/db';
+import {
+  buscarUsuarioPorEmail,
+  contarUsuarios,
+  crearUsuario,
+  ErrorSoloLectura,
+} from '@/lib/db';
 import { isLocale, defaultLocale } from '@/i18n/config';
 
 export interface EstadoAcceso {
@@ -58,7 +63,16 @@ export async function crearPrimerAdmin(
   const debil = claveDebil(clave);
   if (debil) return { error: debil };
 
-  const usuario = crearUsuario(email, nombre, await cifrarClave(clave));
+  const cifrada = await cifrarClave(clave);
+
+  let usuario;
+  try {
+    usuario = crearUsuario(email, nombre, cifrada);
+  } catch (error) {
+    if (error instanceof ErrorSoloLectura) return { error: error.message };
+    throw error;
+  }
+
   await iniciarSesion(usuario);
   redirect(`/${lang}/admin`);
 }

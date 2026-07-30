@@ -44,24 +44,37 @@ const JUGADORES: JugadorSemilla[] = [
   },
 ];
 
-/** Copia la foto de seed/ a data/uploads/ y devuelve sus medidas. */
+/**
+ * Copia la foto de seed/ al directorio de subidas y devuelve sus medidas.
+ * Si el destino no se puede escribir, devolvemos igualmente las medidas: la
+ * ficha se queda sin cartel, pero el sitio arranca en vez de caerse.
+ */
 function copiarFoto(archivo: string, dirSubidas: string): Imagen | null {
   const origen = path.join(DIR_SEMILLA, archivo);
-  if (!fs.existsSync(origen)) return null;
 
-  const buf = fs.readFileSync(origen);
+  let buf: Buffer;
+  try {
+    buf = fs.readFileSync(origen);
+  } catch {
+    return null;
+  }
+
   const leida = leerImagen(buf);
   if (!leida) return null;
 
-  const destino = path.join(dirSubidas, archivo);
-  if (!fs.existsSync(destino)) fs.writeFileSync(destino, buf);
+  try {
+    fs.mkdirSync(dirSubidas, { recursive: true });
+    const destino = path.join(dirSubidas, archivo);
+    if (!fs.existsSync(destino)) fs.writeFileSync(destino, buf);
+  } catch (error) {
+    console.warn(`[semilla] no se ha podido copiar ${archivo}:`, error);
+    return null;
+  }
 
   return { archivo, ancho: leida.ancho, alto: leida.alto };
 }
 
-export function baseInicial(): BaseDatos {
-  const dirSubidas = path.join(process.cwd(), 'data', 'uploads');
-  fs.mkdirSync(dirSubidas, { recursive: true });
+export function baseInicial(dirSubidas: string): BaseDatos {
   const momento = new Date().toISOString();
 
   const jugadores: Jugador[] = JUGADORES.map((j, i) => ({

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { candidaturaSchema } from '@/lib/candidatura';
-import { crearCandidatura } from '@/lib/db';
+import { crearCandidatura, ErrorSoloLectura } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
   const ficha = resultado.data;
 
-  const guardada = crearCandidatura({
+  const ficha_datos = {
     nombre: ficha.nombre,
     nacimiento: String(ficha.nacimiento),
     posicion: ficha.posicion,
@@ -42,7 +42,18 @@ export async function POST(request: Request) {
     video: ficha.video,
     mensaje: ficha.mensaje ?? '',
     idioma: ficha.idioma,
-  });
+  };
+
+  // Si el servidor no puede guardar, el jugador no tiene por qué enterarse:
+  // su ficha sigue llegando por WhatsApp y por el webhook.
+  let guardada;
+  try {
+    guardada = crearCandidatura(ficha_datos);
+  } catch (error) {
+    if (!(error instanceof ErrorSoloLectura)) throw error;
+    console.warn('[candidatura] no se ha podido guardar en la base:', error.message);
+    guardada = { ...ficha_datos, id: null, recibida: new Date().toISOString() };
+  }
 
   const webhook = process.env.CANDIDATURA_WEBHOOK_URL;
   if (webhook) {
