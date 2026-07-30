@@ -1,0 +1,577 @@
+/* ═══════════════════════════════════════════════════════════════
+   Panel de administración. Misma paleta que la web pública, pero
+   la interfaz es de trabajo: densa, legible y sin animaciones que
+   estorben cuando estás metiendo veinte fichas seguidas.
+   ═══════════════════════════════════════════════════════════════ */
+
+.admin {
+  --barra: 250px;
+  display: grid;
+  grid-template-columns: var(--barra) 1fr;
+  min-height: 100vh;
+  align-items: start;
+}
+
+/* ── barra lateral ── */
+.admin-barra {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 26px 20px;
+  border-inline-end: 1px solid var(--glass-borde);
+  background: rgba(8, 12, 14, 0.72);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+.admin-marca {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+.admin-marca img {
+  width: 40px;
+  height: auto;
+  mix-blend-mode: screen;
+}
+.admin-marca b {
+  display: block;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+.admin-marca small {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cesped-luz);
+}
+
+.admin-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.admin-menu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  color: var(--tenue);
+  transition: background 0.2s, color 0.2s;
+}
+.admin-menu a:hover {
+  background: rgba(238, 243, 238, 0.06);
+  color: var(--cal);
+}
+.admin-menu a[aria-current='page'] {
+  background: rgba(30, 94, 74, 0.4);
+  color: var(--cal);
+  box-shadow: inset 0 0 0 1px rgba(62, 168, 130, 0.35);
+}
+.admin-menu .cuenta {
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--ambar);
+  color: #1a1206;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.admin-pie {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--tenue);
+}
+.admin-pie strong {
+  display: block;
+  color: var(--cal);
+  font-size: 0.88rem;
+}
+.admin-pie a,
+.admin-pie button {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: start;
+  font-size: 0.8rem;
+  color: var(--tenue);
+  text-decoration: none;
+  cursor: pointer;
+}
+.admin-pie a:hover,
+.admin-pie button:hover {
+  color: var(--cal);
+}
+
+/* ── contenido ── */
+.admin-cuerpo {
+  padding: 34px 34px 80px;
+  max-width: 1120px;
+}
+.admin-cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+.admin-cabecera h1 {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  letter-spacing: -0.01em;
+}
+.admin-cabecera p {
+  margin: 8px 0 0;
+  color: var(--tenue);
+  font-size: 0.92rem;
+  max-width: 62ch;
+}
+
+.tarjeta {
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-borde);
+  background: rgba(238, 243, 238, 0.035);
+}
+.tarjeta + .tarjeta {
+  margin-top: 18px;
+}
+.tarjeta h2 {
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+.tarjeta .pista {
+  color: var(--tenue);
+  font-size: 0.86rem;
+  margin: 0 0 18px;
+}
+
+/* ── panel de cifras ── */
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 26px;
+}
+.cifra {
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-borde);
+  background: rgba(238, 243, 238, 0.035);
+  text-decoration: none;
+  display: block;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.cifra:hover {
+  border-color: rgba(62, 168, 130, 0.5);
+  transform: translateY(-2px);
+}
+.cifra b {
+  display: block;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 2.4rem;
+  line-height: 1;
+}
+.cifra span {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tenue);
+}
+.cifra.aviso b {
+  color: var(--ambar);
+}
+
+/* ── tablas / listas ── */
+.filas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fila {
+  display: grid;
+  grid-template-columns: 62px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-borde);
+  background: rgba(238, 243, 238, 0.03);
+}
+.fila.oculta {
+  opacity: 0.55;
+}
+.fila .miniatura {
+  width: 62px;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0a0f11;
+  display: grid;
+  place-items: center;
+}
+.fila .miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.fila h3 {
+  font-size: 1.1rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--body);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+.fila .meta {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fila .acciones-fila {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ── botones del panel ── */
+.mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--glass-borde);
+  background: rgba(238, 243, 238, 0.05);
+  color: var(--cal);
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.mini:hover {
+  border-color: rgba(238, 243, 238, 0.42);
+  background: rgba(238, 243, 238, 0.09);
+}
+.mini:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.mini.verde {
+  background: rgba(30, 94, 74, 0.55);
+  border-color: rgba(62, 168, 130, 0.45);
+}
+.mini.roja:hover {
+  border-color: rgba(224, 104, 95, 0.7);
+  color: #ffb9b3;
+}
+.mini.icono {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  letter-spacing: 0;
+}
+
+/* ── formularios del panel ── */
+.rejilla-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.rejilla-campos .ancho {
+  grid-column: 1 / -1;
+}
+.admin .campo label {
+  color: var(--tenue);
+}
+.interruptor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--tenue);
+  cursor: pointer;
+}
+.interruptor input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cesped-luz);
+}
+.acciones-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--glass-borde);
+}
+.mensaje {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+.mensaje.error {
+  color: var(--alerta);
+}
+.mensaje.ok {
+  color: var(--cesped-luz);
+}
+
+.previa {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.previa img {
+  width: 150px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-borde);
+}
+
+.vacio {
+  padding: 40px 24px;
+  border-radius: 16px;
+  border: 1px dashed rgba(238, 243, 238, 0.24);
+  text-align: center;
+  color: var(--tenue);
+}
+.vacio p {
+  margin: 0 0 16px;
+}
+
+/* ── etiquetas de estado ── */
+.estado {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-borde);
+  color: var(--tenue);
+  white-space: nowrap;
+}
+.estado.pendiente {
+  color: var(--ambar);
+  border-color: rgba(216, 162, 74, 0.45);
+}
+.estado.aceptada {
+  color: var(--cesped-luz);
+  border-color: rgba(62, 168, 130, 0.45);
+}
+.estado.rechazada {
+  color: #e0a09a;
+  border-color: rgba(224, 104, 95, 0.4);
+}
+.estado.nueva {
+  background: var(--ambar);
+  color: #1a1206;
+  border-color: transparent;
+}
+
+/* ── candidaturas ── */
+.candidatura-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-borde);
+  background: rgba(238, 243, 238, 0.03);
+}
+.candidatura-admin .arriba {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.candidatura-admin h3 {
+  font-family: var(--body);
+  font-size: 1.15rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.datos-linea {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.datos-linea span {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(238, 243, 238, 0.05);
+  color: var(--tenue);
+}
+.datos-linea span b {
+  color: var(--cal);
+  font-weight: 500;
+}
+.candidatura-admin .recado {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--tenue);
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(238, 243, 238, 0.04);
+  border-inline-start: 2px solid var(--cesped-luz);
+}
+
+.filtros {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* ── acceso ── */
+.acceso {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 30px 20px;
+}
+.acceso-caja {
+  width: 100%;
+  max-width: 430px;
+  padding: 34px 30px;
+  border-radius: 22px;
+}
+.acceso-caja .admin-marca {
+  margin-bottom: 24px;
+}
+.acceso-caja h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+.acceso-caja > p {
+  color: var(--tenue);
+  font-size: 0.9rem;
+  margin-bottom: 22px;
+}
+.acceso-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.acceso-caja .btn {
+  width: 100%;
+  margin-top: 6px;
+}
+.acceso-volver {
+  display: block;
+  margin-top: 20px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  text-decoration: none;
+}
+.acceso-volver:hover {
+  color: var(--cal);
+}
+
+/* ── multiidioma ── */
+.idiomas-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.bandera-campo {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cesped-luz);
+}
+
+/* ── responsive ── */
+@media (max-width: 900px) {
+  .admin {
+    grid-template-columns: 1fr;
+  }
+  .admin-barra {
+    position: static;
+    height: auto;
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--glass-borde);
+  }
+  .admin-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .admin-pie {
+    margin-top: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .admin-cuerpo {
+    padding: 24px 18px 70px;
+  }
+  .fila {
+    grid-template-columns: 52px 1fr;
+  }
+  .fila .acciones-fila {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+  .fila .miniatura {
+    width: 52px;
+  }
+}
+
+/* Cada acción va en su propio <form> (server actions): sin esto, el
+   formulario se blockifica como elemento flex y cada botón cae a una línea. */
+.acciones-fila form,
+.acciones-form form {
+  display: inline-flex;
+}
+
+/* Aviso que no se puede ignorar: almacenamiento temporal. */
+.tarjeta.aviso-serio {
+  border-color: rgba(216, 162, 74, 0.5);
+  background: rgba(216, 162, 74, 0.08);
+  margin-bottom: 22px;
+}
+.tarjeta.aviso-serio h2 {
+  color: var(--ambar);
+}

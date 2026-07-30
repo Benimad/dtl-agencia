@@ -10,3 +10,6 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 .vercel
+
+# Base de datos y fotos que sube la agencia (no van al repositorio)
+/data/

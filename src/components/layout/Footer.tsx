@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { site, whatsappUrl } from '@/data/site';
+import { NOMBRE_SITIO, type Contacto } from '@/data/site';
 import { href } from '@/i18n/routes';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
@@ -7,9 +7,10 @@ import type { Dictionary } from '@/i18n/types';
 interface Props {
   locale: Locale;
   dic: Dictionary;
+  contacto: Contacto;
 }
 
-export function Footer({ locale, dic }: Props) {
+export function Footer({ locale, dic, contacto }: Props) {
   const anio = new Date().getFullYear();
 
   return (
@@ -17,7 +18,7 @@ export function Footer({ locale, dic }: Props) {
       <div className="wrap">
         <div className="pie-rejilla">
           <div className="pie-marca">
-            <h4>{site.nombre}</h4>
+            <h4>{NOMBRE_SITIO}</h4>
             <p>{dic.pie.sobre}</p>
           </div>
 
@@ -46,16 +47,16 @@ export function Footer({ locale, dic }: Props) {
             <h4>{dic.pie.contacto}</h4>
             <ul>
               <li>
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  {site.whatsappVisible}
+                <a href={contacto.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  {contacto.whatsappVisible}
                 </a>
               </li>
               <li>
-                <a href={`mailto:${site.email}`}>{site.email}</a>
+                <a href={`mailto:${contacto.email}`}>{contacto.email}</a>
               </li>
               <li>
-                <a href={site.instagramUrl} target="_blank" rel="noopener noreferrer">
-                  @{site.instagram}
+                <a href={contacto.instagramUrl} target="_blank" rel="noopener noreferrer">
+                  @{contacto.instagram}
                 </a>
               </li>
             </ul>
@@ -64,7 +65,7 @@ export function Footer({ locale, dic }: Props) {
 
         <div className="pie">
           <p>
-            © {anio} {site.nombre} · {dic.pie.descripcion}
+            © {anio} {NOMBRE_SITIO} · {dic.pie.descripcion}
           </p>
           {/*
             ═══ LICENCIA ═══

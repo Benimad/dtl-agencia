@@ -1,7 +1,7 @@
 import { CabeceraSeccion } from '@/components/ui/CabeceraSeccion';
 import { CartelJugador } from '@/components/jugadores/CartelJugador';
 import { CartelLibre } from '@/components/jugadores/CartelLibre';
-import { jugadores as todos } from '@/data/players';
+import type { Jugador } from '@/lib/db/esquema';
 import { href } from '@/i18n/routes';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
@@ -9,11 +9,12 @@ import type { Dictionary } from '@/i18n/types';
 interface Props {
   locale: Locale;
   dic: Dictionary;
+  jugadores: Jugador[];
   /** En la portada mostramos la cabecera con enlace; en la página interior, no. */
   conCabecera?: boolean;
 }
 
-export function Cartelera({ locale, dic, conCabecera = true }: Props) {
+export function Cartelera({ locale, dic, jugadores, conCabecera = true }: Props) {
   return (
     <section id="cartelera">
       <div className="wrap">
@@ -25,7 +26,7 @@ export function Cartelera({ locale, dic, conCabecera = true }: Props) {
           />
         )}
         <div className="cartelera">
-          {todos.map((j, i) => (
+          {jugadores.map((j, i) => (
             <CartelJugador
               key={j.id}
               jugador={j}

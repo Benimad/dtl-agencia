@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { site } from '@/data/site';
+import { NOMBRE_SITIO, urlSitio } from '@/data/site';
 import { getDictionary } from '@/i18n';
 import { locales, type Locale } from '@/i18n/config';
 import { href, type RouteKey } from '@/i18n/routes';
@@ -21,9 +21,9 @@ export function metaDePagina(locale: Locale, clave: ClaveMeta, ruta: RouteKey): 
       languages: Object.fromEntries(locales.map((l) => [l, href(l, ruta)])),
     },
     openGraph: {
-      title: `${meta.titulo} — ${site.nombre}`,
+      title: `${meta.titulo} — ${NOMBRE_SITIO}`,
       description: meta.descripcion,
-      url: `${site.url}${url}`,
+      url: `${urlSitio()}${url}`,
     },
   };
 }

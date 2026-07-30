@@ -1,14 +1,15 @@
 import { IconoEmail, IconoInstagram, IconoWhatsApp } from '@/components/ui/Icons';
 import { Texto } from '@/components/ui/Texto';
-import { site, whatsappUrl } from '@/data/site';
+import type { Contacto } from '@/data/site';
 import type { Dictionary } from '@/i18n/types';
 
 interface Props {
   dic: Dictionary;
+  contacto: Contacto;
   conTitular?: boolean;
 }
 
-export function BloqueContacto({ dic, conTitular = true }: Props) {
+export function BloqueContacto({ dic, contacto, conTitular = true }: Props) {
   return (
     <section id="contacto">
       <div className="wrap">
@@ -21,29 +22,34 @@ export function BloqueContacto({ dic, conTitular = true }: Props) {
           </div>
 
           <div className="vias">
-            <a className="via" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              className="via"
+              href={contacto.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <span className="icono">
                 <IconoWhatsApp />
               </span>
               <span>
                 <small>{dic.contacto.whatsapp}</small>
-                <strong>{site.whatsappVisible}</strong>
+                <strong>{contacto.whatsappVisible}</strong>
               </span>
             </a>
 
-            <a className="via" href={`mailto:${site.email}`}>
+            <a className="via" href={`mailto:${contacto.email}`}>
               <span className="icono">
                 <IconoEmail />
               </span>
               <span>
                 <small>{dic.contacto.email}</small>
-                <strong>{site.email}</strong>
+                <strong>{contacto.email}</strong>
               </span>
             </a>
 
             <a
               className="via"
-              href={site.instagramUrl}
+              href={contacto.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -52,7 +58,7 @@ export function BloqueContacto({ dic, conTitular = true }: Props) {
               </span>
               <span>
                 <small>{dic.contacto.scouts}</small>
-                <strong>@{site.instagram}</strong>
+                <strong>@{contacto.instagram}</strong>
               </span>
             </a>
           </div>

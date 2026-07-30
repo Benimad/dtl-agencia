@@ -1,4 +1,3 @@
-import { site } from '@/data/site';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
 
@@ -19,23 +18,9 @@ const CABECERA: Record<Locale, string> = {
   ar: 'ترشيح لاعب',
 };
 
-const NOMBRE: Record<Locale, string> = {
-  es: 'NOMBRE',
-  fr: 'NOM',
-  ar: 'الاسم',
-};
-
-const CLUB: Record<Locale, string> = {
-  es: 'CLUB',
-  fr: 'CLUB',
-  ar: 'النادي',
-};
-
-const VIDEO: Record<Locale, string> = {
-  es: 'VIDEO',
-  fr: 'VIDÉO',
-  ar: 'الفيديو',
-};
+const NOMBRE: Record<Locale, string> = { es: 'NOMBRE', fr: 'NOM', ar: 'الاسم' };
+const CLUB: Record<Locale, string> = { es: 'CLUB', fr: 'CLUB', ar: 'النادي' };
+const VIDEO: Record<Locale, string> = { es: 'VIDEO', fr: 'VIDÉO', ar: 'الفيديو' };
 
 /** Arma el mensaje de WhatsApp con la ficha ya escrita, en el idioma activo. */
 export function mensajeCandidatura(d: DatosFicha, locale: Locale, dic: Dictionary): string {
@@ -57,9 +42,4 @@ export function mensajeCandidatura(d: DatosFicha, locale: Locale, dic: Dictionar
   if (d.mensaje) lineas.push('', d.mensaje);
 
   return lineas.join('\n');
-}
-
-export function enlaceWhatsApp(texto?: string): string {
-  const base = `https://wa.me/${site.whatsapp}`;
-  return texto ? `${base}?text=${encodeURIComponent(texto)}` : base;
 }

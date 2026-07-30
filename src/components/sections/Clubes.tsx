@@ -1,7 +1,15 @@
-import { clubes } from '@/data/site';
+import type { Club } from '@/lib/db/esquema';
+import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
 
-export function Clubes({ dic }: { dic: Dictionary }) {
+interface Props {
+  locale: Locale;
+  dic: Dictionary;
+  clubes: Club[];
+  extra: string;
+}
+
+export function Clubes({ dic, clubes, extra }: Props) {
   return (
     <section className="clubes">
       <div className="wrap">
@@ -10,11 +18,11 @@ export function Clubes({ dic }: { dic: Dictionary }) {
         </p>
         <div className="clubes-lista rev">
           {clubes.map((c) => (
-            <span className="club" key={c}>
-              {c}
+            <span className="club" key={c.id}>
+              {c.nombre}
             </span>
           ))}
-          <span className="club">{dic.clubes.mas}</span>
+          {extra && <span className="club">{extra}</span>}
         </div>
       </div>
     </section>

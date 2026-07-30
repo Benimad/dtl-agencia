@@ -2,14 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { clasesFuentes } from '../fuentes';
 import '@/styles/globals.css';
-import logo from '@/assets/brand/logo.jpg';
 
-import { Ambiente } from '@/components/layout/Ambiente';
-import { BotonFlotante } from '@/components/layout/BotonFlotante';
-import { Footer } from '@/components/layout/Footer';
-import { Header } from '@/components/layout/Header';
 import { RevealObserver } from '@/components/ui/RevealObserver';
-import { site } from '@/data/site';
+import { NOMBRE_SITIO, urlSitio } from '@/data/site';
 import { getDictionary } from '@/i18n';
 import { dirOf, isLocale, localeOgTag, locales, type Locale } from '@/i18n/config';
 
@@ -36,10 +31,10 @@ export async function generateMetadata({
   const locale = (isLocale(lang) ? lang : 'es') as Locale;
 
   return {
-    metadataBase: new URL(site.url),
+    metadataBase: new URL(urlSitio()),
     title: {
       default: dic.meta.inicio.titulo,
-      template: `%s — ${site.nombre}`,
+      template: `%s — ${NOMBRE_SITIO}`,
     },
     description: dic.meta.inicio.descripcion,
     robots: { index: true, follow: true },
@@ -50,9 +45,9 @@ export async function generateMetadata({
     },
     openGraph: {
       type: 'website',
-      siteName: site.nombre,
+      siteName: NOMBRE_SITIO,
       locale: localeOgTag[locale],
-      url: `${site.url}/${locale}`,
+      url: `${urlSitio()}/${locale}`,
       title: dic.meta.inicio.titulo,
       description: dic.meta.inicio.descripcion,
     },
@@ -74,44 +69,10 @@ export default async function LayoutIdioma({
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
-  const locale = lang;
-  const dic = getDictionary(locale);
-
-  const datosEstructurados = {
-    '@context': 'https://schema.org',
-    '@type': 'SportsOrganization',
-    name: site.nombre,
-    description: dic.meta.inicio.descripcion,
-    url: `${site.url}/${locale}`,
-    logo: `${site.url}${logo.src}`,
-    email: site.email,
-    telephone: `+${site.whatsapp}`,
-    areaServed: site.paises,
-    sameAs: [site.instagramUrl],
-    contactPoint: {
-      '@type': 'ContactPoint',
-      telephone: `+${site.whatsapp}`,
-      contactType: 'customer service',
-      availableLanguage: site.idiomasAtencion,
-    },
-  };
-
   return (
-    <html lang={locale} dir={dirOf(locale)} className={clasesFuentes}>
+    <html lang={lang} dir={dirOf(lang)} className={clasesFuentes}>
       <body>
-        <script
-          type="application/ld+json"
-          // Datos estructurados propios, sin entrada de usuario.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(datosEstructurados) }}
-        />
-        <a className="saltar" href="#contenido">
-          {dic.nav.saltar}
-        </a>
-        <Ambiente />
-        <Header locale={locale} dic={dic} />
-        <main id="contenido">{children}</main>
-        <Footer locale={locale} dic={dic} />
-        <BotonFlotante texto={dic.flotante} />
+        {children}
         <RevealObserver />
       </body>
     </html>

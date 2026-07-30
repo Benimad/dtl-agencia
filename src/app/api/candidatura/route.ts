@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { candidaturaSchema } from '@/lib/candidatura';
+import { crearCandidatura } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
 /**
- * Recibe la candidatura, la valida en el servidor y —si hay webhook
- * configurado— la reenvía a la herramienta que use la agencia.
- * El envío por WhatsApp lo sigue haciendo el jugador desde su móvil:
- * aquí no se guarda nada en disco ni en base de datos.
+ * Recibe la candidatura del jugador, la valida y la guarda en la bandeja
+ * del panel (/admin/candidaturas). Si hay webhook configurado, además la
+ * reenvía. El envío por WhatsApp lo sigue haciendo el jugador desde su móvil.
  */
 export async function POST(request: Request) {
   let cuerpo: unknown;
@@ -31,27 +31,32 @@ export async function POST(request: Request) {
   }
 
   const ficha = resultado.data;
-  const webhook = process.env.CANDIDATURA_WEBHOOK_URL;
 
+  const guardada = crearCandidatura({
+    nombre: ficha.nombre,
+    nacimiento: String(ficha.nacimiento),
+    posicion: ficha.posicion,
+    pie: ficha.pie ?? '',
+    club: ficha.club ?? '',
+    pais: ficha.pais ?? '',
+    video: ficha.video,
+    mensaje: ficha.mensaje ?? '',
+    idioma: ficha.idioma,
+  });
+
+  const webhook = process.env.CANDIDATURA_WEBHOOK_URL;
   if (webhook) {
     try {
       await fetch(webhook, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...ficha, recibida: new Date().toISOString() }),
+        body: JSON.stringify(guardada),
       });
     } catch (error) {
-      // El webhook es un extra: si falla, el jugador no debe enterarse.
+      // El webhook es un extra: la ficha ya está guardada, el jugador no debe enterarse.
       console.error('[candidatura] webhook falló:', error);
     }
-  } else {
-    console.info('[candidatura]', {
-      nombre: ficha.nombre,
-      posicion: ficha.posicion,
-      nacimiento: ficha.nacimiento,
-      idioma: ficha.idioma,
-    });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, id: guardada.id });
 }

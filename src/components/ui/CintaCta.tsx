@@ -1,12 +1,19 @@
 import Link from 'next/link';
 import { IconoWhatsApp } from './Icons';
-import { whatsappUrl } from '@/data/site';
 import { href } from '@/i18n/routes';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
 
 /** Cierre de página: la llamada a la acción que se repite en todas. */
-export function CintaCta({ locale, dic }: { locale: Locale; dic: Dictionary }) {
+export function CintaCta({
+  locale,
+  dic,
+  whatsappUrl,
+}: {
+  locale: Locale;
+  dic: Dictionary;
+  whatsappUrl: string;
+}) {
   return (
     <section>
       <div className="wrap">

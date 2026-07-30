@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import type { Jugador } from '@/data/players';
+import { FotoJugador } from './FotoJugador';
+import type { Jugador } from '@/lib/db/esquema';
 import { href } from '@/i18n/routes';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
@@ -17,17 +17,16 @@ export function CartelJugador({ jugador, locale, dic, prioridad = false }: Props
   return (
     <Link
       className="cartel cristal rev"
-      href={href(locale, 'fichajes', jugador.id)}
+      href={href(locale, 'fichajes', jugador.slug)}
       aria-label={`${jugador.nombre} — ${dic.cartelera.ver}`}
     >
       <span className="sello">{dic.cartelera.sello}</span>
       <div className="marco">
-        <Image
-          src={jugador.img}
+        <FotoJugador
+          imagen={jugador.imagen}
           alt={jugador.nombre}
-          placeholder="blur"
           sizes="(max-width: 700px) 100vw, (max-width: 1180px) 50vw, 33vw"
-          priority={prioridad}
+          prioridad={prioridad}
         />
       </div>
       <div className="placa">

@@ -3,7 +3,8 @@
 import { useId, useState } from 'react';
 import Link from 'next/link';
 import { IconoWhatsApp } from '@/components/ui/Icons';
-import { enlaceWhatsApp, mensajeCandidatura } from '@/lib/whatsapp';
+import { mensajeCandidatura } from '@/lib/whatsapp';
+import { enlaceWa } from '@/data/site';
 import { href } from '@/i18n/routes';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
@@ -11,6 +12,7 @@ import type { Dictionary } from '@/i18n/types';
 interface Props {
   locale: Locale;
   dic: Dictionary;
+  whatsapp: string;
 }
 
 type Campo = 'nombre' | 'nacimiento' | 'posicion' | 'pie' | 'club' | 'pais' | 'video' | 'mensaje';
@@ -26,7 +28,7 @@ const VACIO: Record<Campo, string> = {
   mensaje: '',
 };
 
-export function FormularioCandidatura({ locale, dic }: Props) {
+export function FormularioCandidatura({ locale, dic, whatsapp }: Props) {
   const id = useId();
   const [valores, setValores] = useState<Record<Campo, string>>(VACIO);
   const [rgpd, setRgpd] = useState(false);
@@ -95,7 +97,7 @@ export function FormularioCandidatura({ locale, dic }: Props) {
     }
 
     const texto = mensajeCandidatura(ficha, locale, dic);
-    window.open(enlaceWhatsApp(texto), '_blank', 'noopener,noreferrer');
+    window.open(enlaceWa(whatsapp, texto), '_blank', 'noopener,noreferrer');
 
     setEnviando(false);
     setAviso(avisoFinal);

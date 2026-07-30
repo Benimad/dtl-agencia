@@ -607,3 +607,17 @@ html[dir="rtl"] .campo select {
     grid-template-columns: 1fr;
   }
 }
+
+/* Hueco del cartel cuando un fichaje todavía no tiene foto. */
+.sin-foto {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, rgba(30, 94, 74, 0.35), rgba(6, 9, 11, 0.9));
+  color: rgba(238, 243, 238, 0.5);
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 3rem;
+  letter-spacing: 0.05em;
+}

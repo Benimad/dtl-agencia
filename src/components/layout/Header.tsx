@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import logo from '@/assets/brand/logo.jpg';
 import { IconoWhatsApp } from '@/components/ui/Icons';
-import { whatsappUrl } from '@/data/site';
 import { href, switchLocale, type RouteKey } from '@/i18n/routes';
 import { localeLabel, localeName, locales, type Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/types';
@@ -22,9 +21,10 @@ const ENLACES: RouteKey[] = [
 interface Props {
   locale: Locale;
   dic: Dictionary;
+  whatsappUrl: string;
 }
 
-export function Header({ locale, dic }: Props) {
+export function Header({ locale, dic, whatsappUrl }: Props) {
   const pathname = usePathname();
   const [abierto, setAbierto] = useState(false);
   const [rutaPrevia, setRutaPrevia] = useState(pathname);

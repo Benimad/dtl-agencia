@@ -1,10 +1,11 @@
 import type { MetadataRoute } from 'next';
-import { site } from '@/data/site';
+import { urlSitio } from '@/data/site';
 
 export default function robots(): MetadataRoute.Robots {
+  const url = urlSitio();
   return {
-    rules: [{ userAgent: '*', allow: '/', disallow: '/api/' }],
-    sitemap: `${site.url}/sitemap.xml`,
-    host: site.url,
+    rules: [{ userAgent: '*', allow: '/', disallow: ['/api/', '/es/admin', '/fr/admin', '/ar/admin'] }],
+    sitemap: `${url}/sitemap.xml`,
+    host: url,
   };
 }

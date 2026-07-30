@@ -1,7 +1,12 @@
 import { IconoWhatsApp } from '@/components/ui/Icons';
-import { whatsappUrl } from '@/data/site';
 
-export function BotonFlotante({ texto }: { texto: string }) {
+export function BotonFlotante({
+  texto,
+  whatsappUrl,
+}: {
+  texto: string;
+  whatsappUrl: string;
+}) {
   return (
     <a
       className="flotante"
