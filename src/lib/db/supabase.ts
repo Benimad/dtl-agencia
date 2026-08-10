@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { createHash } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { baseInicial } from './semilla';
 import type {
@@ -74,6 +75,29 @@ const aAjustes = (f: FilaAjustes): Ajustes => ({
   clubesExtra: f.clubes_extra,
 });
 
+/**
+ * Id derivado del contenido. Dos instancias que arranquen a la vez y siembren
+ * lo mismo generan el mismo id, así que la segunda choca con la clave primaria
+ * en vez de duplicar la fila.
+ */
+function idEstable(clave: string): string {
+  const h = createHash('sha1').update(`dtl-agencia:${clave}`).digest('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
+}
+
+/** Crea el cubo de carteles si no existe. Un paso manual menos que olvidar. */
+async function asegurarCubo(): Promise<boolean> {
+  const { data } = await sb().storage.getBucket(CUBO);
+  if (data) return true;
+
+  const { error } = await sb().storage.createBucket(CUBO, { public: true });
+  if (error && !/already exists/i.test(error.message)) {
+    console.warn(`[supabase] no se ha podido crear el cubo ${CUBO}: ${error.message}`);
+    return false;
+  }
+  return true;
+}
+
 /* ── semilla ──────────────────────────────────────────────────── */
 
 let sembrado = false;
@@ -87,36 +111,42 @@ export async function sembrarSiVacio(): Promise<void> {
   if (sembrado) return;
   sembrado = true;
 
+  const semilla = baseInicial(''); // sin copiar fotos al disco: van al cubo
+  const hayCubo = await asegurarCubo();
+
+  const a = semilla.ajustes;
+  await sb()
+    .from('ajustes')
+    .upsert(
+      {
+        id: 1,
+        whatsapp: a.whatsapp,
+        whatsapp_visible: a.whatsappVisible,
+        email: a.email,
+        instagram: a.instagram,
+        clubes_extra: a.clubesExtra,
+      },
+      { ignoreDuplicates: true },
+    );
+
   const { count } = await sb()
     .from('jugadores')
     .select('id', { count: 'exact', head: true });
 
-  const { count: cuentaAjustes } = await sb()
-    .from('ajustes')
-    .select('id', { count: 'exact', head: true });
-
-  const semilla = baseInicial(''); // sin copiar fotos: las subimos aparte
-
-  if (cuentaAjustes === 0) {
-    const a = semilla.ajustes;
-    await sb().from('ajustes').insert({
-      id: 1,
-      whatsapp: a.whatsapp,
-      whatsapp_visible: a.whatsappVisible,
-      email: a.email,
-      instagram: a.instagram,
-      clubes_extra: a.clubesExtra,
-    });
+  if (count && count > 0) {
+    // La base ya tiene fichajes: solo comprobamos que no se quedaron sin cartel
+    // (pasa si el cubo no existía la primera vez).
+    if (hayCubo) await completarCarteles();
+    return;
   }
 
-  if (count && count > 0) return;
-
-  const fotos = await subirFotosSemilla();
+  const fotos = hayCubo ? await subirFotosSemilla() : {};
 
   await sb()
     .from('jugadores')
-    .insert(
+    .upsert(
       semilla.jugadores.map((j, i) => ({
+        id: idEstable(`jugador:${j.slug}`),
         slug: j.slug,
         nombre: j.nombre,
         club: j.club,
@@ -131,32 +161,50 @@ export async function sembrarSiVacio(): Promise<void> {
         publicado: true,
         orden: i,
       })),
+      { ignoreDuplicates: true },
     );
 
-  const { count: cuentaTesti } = await sb()
+  await sb()
     .from('testimonios')
-    .select('id', { count: 'exact', head: true });
-  if (cuentaTesti === 0) {
-    await sb()
-      .from('testimonios')
-      .insert(
-        semilla.testimonios.map((t, i) => ({
-          texto: t.texto,
-          firma: t.firma,
-          publicado: true,
-          orden: i,
-        })),
-      );
-  }
+    .upsert(
+      semilla.testimonios.map((t, i) => ({
+        id: idEstable(`testimonio:${i}`),
+        texto: t.texto,
+        firma: t.firma,
+        publicado: true,
+        orden: i,
+      })),
+      { ignoreDuplicates: true },
+    );
 
-  const { count: cuentaClubes } = await sb()
+  await sb()
     .from('clubes')
-    .select('id', { count: 'exact', head: true });
-  if (cuentaClubes === 0) {
-    await sb()
-      .from('clubes')
-      .insert(semilla.clubes.map((c, i) => ({ nombre: c.nombre, publicado: true, orden: i })));
-  }
+    .upsert(
+      semilla.clubes.map((c, i) => ({
+        id: idEstable(`club:${c.nombre}`),
+        nombre: c.nombre,
+        publicado: true,
+        orden: i,
+      })),
+      { ignoreDuplicates: true },
+    );
+}
+
+/** Pone el cartel a los fichajes de la semilla que se quedaron sin él. */
+async function completarCarteles(): Promise<void> {
+  const filas = comprobar(
+    await sb().from('jugadores').select('id, slug, imagen').is('imagen', null),
+    'buscar fichajes sin cartel',
+  ) as { id: string; slug: string }[];
+
+  if (filas.length === 0) return;
+
+  const fotos = await subirFotosSemilla();
+  await Promise.all(
+    filas
+      .filter((f) => fotos[f.slug])
+      .map((f) => sb().from('jugadores').update({ imagen: fotos[f.slug] }).eq('id', f.id)),
+  );
 }
 
 /** Sube al cubo las tres fotos que vienen en el repositorio. */
