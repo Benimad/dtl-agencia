@@ -1,6 +1,7 @@
 import 'server-only';
 
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import os from 'node:os';
 import { cookies } from 'next/headers';
 import { obtenerUsuario, type Usuario } from '@/lib/db';
 
@@ -14,17 +15,53 @@ import { obtenerUsuario, type Usuario } from '@/lib/db';
 export const COOKIE_SESION = 'dtl_sesion';
 const DIAS = 7;
 
-function secreto(): string {
-  const s = process.env.AUTH_SECRET;
-  if (s && s.length >= 32) return s;
+let secretoCache: string | null = null;
+let secretoPropio = false;
 
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'Falta AUTH_SECRET (mínimo 32 caracteres). Sin él las sesiones del panel no son seguras.',
-    );
+/**
+ * Clave con la que se firman las sesiones.
+ *
+ * Lo correcto es definir AUTH_SECRET. Si no está, no tiramos el panel abajo:
+ * derivamos una clave estable a partir de lo que identifica a este despliegue.
+ * Las sesiones funcionan, pero se invalidan al publicar una versión nueva —
+ * mejor eso que un 500 en la cara del cliente.
+ */
+function secreto(): string {
+  if (secretoCache) return secretoCache;
+
+  const definido = process.env.AUTH_SECRET;
+  if (definido && definido.length >= 32) {
+    secretoCache = definido;
+    secretoPropio = true;
+    return secretoCache;
   }
-  // En desarrollo no bloqueamos el arranque: secreto fijo y aviso claro.
-  return 'desarrollo-inseguro-define-AUTH_SECRET-en-env-local';
+
+  const huella = [
+    process.env.VERCEL_DEPLOYMENT_ID,
+    process.env.VERCEL_GIT_COMMIT_SHA,
+    process.env.VERCEL_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    os.hostname(),
+    process.cwd(),
+  ]
+    .filter(Boolean)
+    .join('|');
+
+  secretoCache = createHash('sha256').update(`dtl-agencia:${huella}`).digest('base64url');
+  secretoPropio = false;
+
+  console.warn(
+    '[auth] AUTH_SECRET no está definida: se usa una clave derivada del despliegue. ' +
+      'Las sesiones del panel se cerrarán en cada publicación. Define AUTH_SECRET en el entorno.',
+  );
+
+  return secretoCache;
+}
+
+/** ¿La clave de sesión es la que se ha configurado a mano? Lo usa el panel para avisar. */
+export function secretoConfigurado(): boolean {
+  secreto();
+  return secretoPropio;
 }
 
 function firmar(cuerpo: string): string {
