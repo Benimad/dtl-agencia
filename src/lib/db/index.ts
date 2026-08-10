@@ -1,6 +1,20 @@
 import 'server-only';
 
-import { ahora, escribirBD, leerBD, nuevoId } from './almacen';
+/* ══════════════════════════════════════════════════════════════
+   Puerta de entrada a los datos. Hay dos backends:
+
+     · Supabase  — cuando están sus variables de entorno. Postgres
+                   para los datos y Storage para los carteles.
+     · Archivo   — data/db.json. Para desarrollo local y servidores
+                   con disco propio.
+
+   El resto de la aplicación no sabe cuál está funcionando.
+   ══════════════════════════════════════════════════════════════ */
+
+import * as archivo from './archivo';
+import * as remoto from './supabase';
+import { supabaseActivo } from './supabase';
+import { almacenamientoPersistente as discoPersistente } from './almacen';
 import type {
   Ajustes,
   Candidatura,
@@ -13,323 +27,198 @@ import type {
 } from './esquema';
 
 export * from './esquema';
-export { dirSubidas, ErrorSoloLectura, almacenamientoPersistente } from './almacen';
+export { dirSubidas, ErrorSoloLectura } from './almacen';
+export { crearSlug } from './archivo';
+export { supabaseActivo, subirFoto, borrarFotoRemota, CUBO } from './supabase';
+export type { DatosCandidatura, DatosJugador, DatosTestimonio } from './archivo';
 
-/**
- * Garantiza que la base existe. En serverless cada instancia arranca vacía:
- * si la primera petición que le llega es la de una foto, sin esto no habría
- * nada que servir.
- */
-export function asegurarBase(): void {
-  leerBD();
+import { crearSlug } from './archivo';
+import type { DatosCandidatura, DatosJugador, DatosTestimonio } from './archivo';
+
+/** ¿Los cambios del panel sobreviven a un despliegue? */
+export function almacenamientoPersistente(): boolean {
+  return supabaseActivo() || discoPersistente();
 }
 
-/* ── utilidades ───────────────────────────────────────────────── */
-
-const porOrden = <T extends { orden: number }>(a: T, b: T) => a.orden - b.orden;
-
-export function crearSlug(texto: string): string {
-  return texto
-    .normalize('NFD')
-    // NFD separa el acento de la letra; aquí tiramos el acento.
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .slice(0, 60);
-}
-
-function slugLibre(base: string, ignorarId?: string): string {
-  const bd = leerBD();
-  const raiz = base || 'jugador';
-  let slug = raiz;
-  let n = 2;
-  while (bd.jugadores.some((j) => j.slug === slug && j.id !== ignorarId)) {
-    slug = `${raiz}-${n++}`;
-  }
-  return slug;
+/** Qué backend está sirviendo. Solo para avisos del panel. */
+export function backend(): 'supabase' | 'archivo' {
+  return supabaseActivo() ? 'supabase' : 'archivo';
 }
 
 /* ── jugadores ────────────────────────────────────────────────── */
 
-export interface DatosJugador {
-  nombre: string;
-  club: string;
-  temporada: string;
-  posicion: string;
-  nacimiento: string;
-  pie: string;
-  altura: string;
-  pais: string;
-  video: string;
-  publicado: boolean;
+export async function listarJugadores(soloPublicados = true): Promise<Jugador[]> {
+  return supabaseActivo()
+    ? remoto.listarJugadores(soloPublicados)
+    : archivo.listarJugadores(soloPublicados);
 }
 
-export function listarJugadores(soloPublicados = true): Jugador[] {
-  const bd = leerBD();
-  const lista = soloPublicados ? bd.jugadores.filter((j) => j.publicado) : bd.jugadores;
-  return [...lista].sort(porOrden);
+export async function obtenerJugadorPorSlug(slug: string): Promise<Jugador | undefined> {
+  return supabaseActivo()
+    ? remoto.obtenerJugadorPorSlug(slug)
+    : archivo.obtenerJugadorPorSlug(slug);
 }
 
-export function obtenerJugadorPorSlug(slug: string): Jugador | undefined {
-  return leerBD().jugadores.find((j) => j.slug === slug && j.publicado);
+export async function obtenerJugador(id: string): Promise<Jugador | undefined> {
+  return supabaseActivo() ? remoto.obtenerJugador(id) : archivo.obtenerJugador(id);
 }
 
-export function obtenerJugador(id: string): Jugador | undefined {
-  return leerBD().jugadores.find((j) => j.id === id);
+export async function crearJugador(
+  datos: DatosJugador,
+  imagen: Imagen | null,
+): Promise<Jugador> {
+  return supabaseActivo()
+    ? remoto.crearJugador(datos, imagen, crearSlug(datos.nombre))
+    : archivo.crearJugador(datos, imagen);
 }
 
-export function crearJugador(datos: DatosJugador, imagen: Imagen | null): Jugador {
-  const momento = ahora();
-  const jugador: Jugador = {
-    id: nuevoId(),
-    slug: slugLibre(crearSlug(datos.nombre)),
-    ...datos,
-    imagen,
-    orden: leerBD().jugadores.length,
-    creado: momento,
-    actualizado: momento,
-  };
-  escribirBD((bd) => {
-    bd.jugadores.push(jugador);
-  });
-  return jugador;
-}
-
-export function actualizarJugador(
+export async function actualizarJugador(
   id: string,
   datos: DatosJugador,
   imagen?: Imagen | null,
-): Jugador | null {
-  return escribirBD((bd) => {
-    const jugador = bd.jugadores.find((j) => j.id === id);
-    if (!jugador) return null;
-
-    if (jugador.nombre !== datos.nombre) {
-      jugador.slug = slugLibre(crearSlug(datos.nombre), id);
-    }
-    Object.assign(jugador, datos);
-    // undefined = «no toques la foto»; null = «quítala».
-    if (imagen !== undefined) jugador.imagen = imagen;
-    jugador.actualizado = ahora();
-    return jugador;
-  });
+): Promise<Jugador | null> {
+  return supabaseActivo()
+    ? remoto.actualizarJugador(id, datos, imagen, crearSlug(datos.nombre))
+    : archivo.actualizarJugador(id, datos, imagen);
 }
 
-export function borrarJugador(id: string): Jugador | null {
-  return escribirBD((bd) => {
-    const i = bd.jugadores.findIndex((j) => j.id === id);
-    if (i === -1) return null;
-    const [borrado] = bd.jugadores.splice(i, 1);
-    bd.jugadores.forEach((j, n) => {
-      j.orden = n;
-    });
-    return borrado;
-  });
+export async function borrarJugador(id: string): Promise<Jugador | null> {
+  return supabaseActivo() ? remoto.borrarJugador(id) : archivo.borrarJugador(id);
 }
 
-/** Mueve un elemento una posición arriba (-1) o abajo (+1). */
-function mover<T extends { id: string; orden: number }>(lista: T[], id: string, salto: number) {
-  const ordenada = [...lista].sort(porOrden);
-  const i = ordenada.findIndex((x) => x.id === id);
-  const destino = i + salto;
-  if (i === -1 || destino < 0 || destino >= ordenada.length) return;
-  [ordenada[i], ordenada[destino]] = [ordenada[destino], ordenada[i]];
-  ordenada.forEach((x, n) => {
-    x.orden = n;
-  });
-}
-
-export function moverJugador(id: string, salto: number) {
-  escribirBD((bd) => mover(bd.jugadores, id, salto));
+export async function moverJugador(id: string, salto: number): Promise<void> {
+  return supabaseActivo() ? remoto.moverJugador(id, salto) : archivo.moverJugador(id, salto);
 }
 
 /* ── testimonios ──────────────────────────────────────────────── */
 
-export type DatosTestimonio = Omit<Testimonio, 'id' | 'orden'>;
-
-export function listarTestimonios(soloPublicados = true): Testimonio[] {
-  const bd = leerBD();
-  const lista = soloPublicados ? bd.testimonios.filter((t) => t.publicado) : bd.testimonios;
-  return [...lista].sort(porOrden);
+export async function listarTestimonios(soloPublicados = true): Promise<Testimonio[]> {
+  return supabaseActivo()
+    ? remoto.listarTestimonios(soloPublicados)
+    : archivo.listarTestimonios(soloPublicados);
 }
 
-export function obtenerTestimonio(id: string): Testimonio | undefined {
-  return leerBD().testimonios.find((t) => t.id === id);
+export async function crearTestimonio(datos: DatosTestimonio): Promise<Testimonio> {
+  return supabaseActivo() ? remoto.crearTestimonio(datos) : archivo.crearTestimonio(datos);
 }
 
-export function crearTestimonio(datos: DatosTestimonio): Testimonio {
-  const testimonio: Testimonio = { id: nuevoId(), ...datos, orden: leerBD().testimonios.length };
-  escribirBD((bd) => {
-    bd.testimonios.push(testimonio);
-  });
-  return testimonio;
+export async function actualizarTestimonio(
+  id: string,
+  datos: DatosTestimonio,
+): Promise<Testimonio | null> {
+  return supabaseActivo()
+    ? remoto.actualizarTestimonio(id, datos)
+    : archivo.actualizarTestimonio(id, datos);
 }
 
-export function actualizarTestimonio(id: string, datos: DatosTestimonio): Testimonio | null {
-  return escribirBD((bd) => {
-    const t = bd.testimonios.find((x) => x.id === id);
-    if (!t) return null;
-    Object.assign(t, datos);
-    return t;
-  });
+export async function borrarTestimonio(id: string): Promise<void> {
+  return supabaseActivo() ? remoto.borrarTestimonio(id) : archivo.borrarTestimonio(id);
 }
 
-export function borrarTestimonio(id: string) {
-  escribirBD((bd) => {
-    bd.testimonios = bd.testimonios.filter((t) => t.id !== id);
-    bd.testimonios.forEach((t, n) => {
-      t.orden = n;
-    });
-  });
-}
-
-export function moverTestimonio(id: string, salto: number) {
-  escribirBD((bd) => mover(bd.testimonios, id, salto));
+export async function moverTestimonio(id: string, salto: number): Promise<void> {
+  return supabaseActivo()
+    ? remoto.moverTestimonio(id, salto)
+    : archivo.moverTestimonio(id, salto);
 }
 
 /* ── clubes ───────────────────────────────────────────────────── */
 
-export function listarClubes(soloPublicados = true): Club[] {
-  const bd = leerBD();
-  const lista = soloPublicados ? bd.clubes.filter((c) => c.publicado) : bd.clubes;
-  return [...lista].sort(porOrden);
+export async function listarClubes(soloPublicados = true): Promise<Club[]> {
+  return supabaseActivo()
+    ? remoto.listarClubes(soloPublicados)
+    : archivo.listarClubes(soloPublicados);
 }
 
-export function crearClub(nombre: string, publicado = true): Club {
-  const club: Club = { id: nuevoId(), nombre, publicado, orden: leerBD().clubes.length };
-  escribirBD((bd) => {
-    bd.clubes.push(club);
-  });
-  return club;
+export async function crearClub(nombre: string, publicado = true): Promise<Club> {
+  return supabaseActivo() ? remoto.crearClub(nombre, publicado) : archivo.crearClub(nombre, publicado);
 }
 
-export function actualizarClub(id: string, nombre: string, publicado: boolean) {
-  escribirBD((bd) => {
-    const c = bd.clubes.find((x) => x.id === id);
-    if (c) {
-      c.nombre = nombre;
-      c.publicado = publicado;
-    }
-  });
+export async function actualizarClub(
+  id: string,
+  nombre: string,
+  publicado: boolean,
+): Promise<void> {
+  return supabaseActivo()
+    ? remoto.actualizarClub(id, nombre, publicado)
+    : archivo.actualizarClub(id, nombre, publicado);
 }
 
-export function borrarClub(id: string) {
-  escribirBD((bd) => {
-    bd.clubes = bd.clubes.filter((c) => c.id !== id);
-    bd.clubes.forEach((c, n) => {
-      c.orden = n;
-    });
-  });
+export async function borrarClub(id: string): Promise<void> {
+  return supabaseActivo() ? remoto.borrarClub(id) : archivo.borrarClub(id);
 }
 
-export function moverClub(id: string, salto: number) {
-  escribirBD((bd) => mover(bd.clubes, id, salto));
+export async function moverClub(id: string, salto: number): Promise<void> {
+  return supabaseActivo() ? remoto.moverClub(id, salto) : archivo.moverClub(id, salto);
 }
 
 /* ── candidaturas ─────────────────────────────────────────────── */
 
-export type DatosCandidatura = Omit<
-  Candidatura,
-  'id' | 'estado' | 'notas' | 'recibida' | 'leida'
->;
-
-export function listarCandidaturas(estado?: EstadoCandidatura): Candidatura[] {
-  const bd = leerBD();
-  const lista = estado ? bd.candidaturas.filter((c) => c.estado === estado) : bd.candidaturas;
-  return [...lista].sort((a, b) => b.recibida.localeCompare(a.recibida));
+export async function listarCandidaturas(estado?: EstadoCandidatura): Promise<Candidatura[]> {
+  return supabaseActivo() ? remoto.listarCandidaturas(estado) : archivo.listarCandidaturas(estado);
 }
 
-export function obtenerCandidatura(id: string): Candidatura | undefined {
-  return leerBD().candidaturas.find((c) => c.id === id);
+export async function crearCandidatura(datos: DatosCandidatura): Promise<Candidatura> {
+  return supabaseActivo() ? remoto.crearCandidatura(datos) : archivo.crearCandidatura(datos);
 }
 
-export function crearCandidatura(datos: DatosCandidatura): Candidatura {
-  const candidatura: Candidatura = {
-    id: nuevoId(),
-    ...datos,
-    estado: 'pendiente',
-    notas: '',
-    recibida: ahora(),
-    leida: false,
-  };
-  escribirBD((bd) => {
-    bd.candidaturas.unshift(candidatura);
-    // La bandeja no crece sin fin: guardamos las 500 últimas.
-    if (bd.candidaturas.length > 500) bd.candidaturas.length = 500;
-  });
-  return candidatura;
-}
-
-export function actualizarCandidatura(
+export async function actualizarCandidatura(
   id: string,
   cambios: Partial<Pick<Candidatura, 'estado' | 'notas' | 'leida'>>,
-) {
-  escribirBD((bd) => {
-    const c = bd.candidaturas.find((x) => x.id === id);
-    if (c) Object.assign(c, cambios);
-  });
+): Promise<void> {
+  return supabaseActivo()
+    ? remoto.actualizarCandidatura(id, cambios)
+    : archivo.actualizarCandidatura(id, cambios);
 }
 
-export function borrarCandidatura(id: string) {
-  escribirBD((bd) => {
-    bd.candidaturas = bd.candidaturas.filter((c) => c.id !== id);
-  });
+export async function borrarCandidatura(id: string): Promise<void> {
+  return supabaseActivo() ? remoto.borrarCandidatura(id) : archivo.borrarCandidatura(id);
 }
 
-export function contarCandidaturas() {
-  const bd = leerBD();
-  return {
-    total: bd.candidaturas.length,
-    pendientes: bd.candidaturas.filter((c) => c.estado === 'pendiente').length,
-    sinLeer: bd.candidaturas.filter((c) => !c.leida).length,
-  };
+export async function contarCandidaturas() {
+  return supabaseActivo() ? remoto.contarCandidaturas() : archivo.contarCandidaturas();
 }
 
 /* ── ajustes ──────────────────────────────────────────────────── */
 
-export function obtenerAjustes(): Ajustes {
-  return leerBD().ajustes;
+export async function obtenerAjustes(): Promise<Ajustes> {
+  return supabaseActivo() ? remoto.obtenerAjustes() : archivo.obtenerAjustes();
 }
 
-export function actualizarAjustes(cambios: Partial<Ajustes>) {
-  escribirBD((bd) => {
-    bd.ajustes = { ...bd.ajustes, ...cambios };
-  });
+export async function actualizarAjustes(cambios: Partial<Ajustes>): Promise<void> {
+  return supabaseActivo() ? remoto.actualizarAjustes(cambios) : archivo.actualizarAjustes(cambios);
 }
 
 /* ── usuarios ─────────────────────────────────────────────────── */
 
-export function buscarUsuarioPorEmail(email: string): Usuario | undefined {
-  const buscado = email.trim().toLowerCase();
-  return leerBD().usuarios.find((u) => u.email === buscado);
+export async function buscarUsuarioPorEmail(email: string): Promise<Usuario | undefined> {
+  return supabaseActivo()
+    ? remoto.buscarUsuarioPorEmail(email)
+    : archivo.buscarUsuarioPorEmail(email);
 }
 
-export function obtenerUsuario(id: string): Usuario | undefined {
-  return leerBD().usuarios.find((u) => u.id === id);
+export async function obtenerUsuario(id: string): Promise<Usuario | undefined> {
+  return supabaseActivo() ? remoto.obtenerUsuario(id) : archivo.obtenerUsuario(id);
 }
 
-export function contarUsuarios(): number {
-  return leerBD().usuarios.length;
+export async function contarUsuarios(): Promise<number> {
+  return supabaseActivo() ? remoto.contarUsuarios() : archivo.contarUsuarios();
 }
 
-export function crearUsuario(email: string, nombre: string, clave: string): Usuario {
-  const usuario: Usuario = {
-    id: nuevoId(),
-    email: email.trim().toLowerCase(),
-    nombre,
-    clave,
-    creado: ahora(),
-  };
-  escribirBD((bd) => {
-    bd.usuarios.push(usuario);
-  });
-  return usuario;
+export async function crearUsuario(
+  email: string,
+  nombre: string,
+  clave: string,
+): Promise<Usuario> {
+  return supabaseActivo()
+    ? remoto.crearUsuario(email, nombre, clave)
+    : archivo.crearUsuario(email, nombre, clave);
 }
 
-export function cambiarClave(id: string, clave: string) {
-  escribirBD((bd) => {
-    const u = bd.usuarios.find((x) => x.id === id);
-    if (u) u.clave = clave;
-  });
+export async function cambiarClave(id: string, clave: string): Promise<void> {
+  return supabaseActivo() ? remoto.cambiarClave(id, clave) : archivo.cambiarClave(id, clave);
+}
+
+/** Solo el backend de archivo lo necesita: siembra antes de servir una foto. */
+export function asegurarBase(): void {
+  if (!supabaseActivo()) archivo.asegurarBase();
 }

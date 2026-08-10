@@ -7,13 +7,15 @@ export default async function Resumen({ params }: { params: Promise<{ lang: stri
   const { lang } = await params;
   const base = `/${lang}/admin`;
 
-  const jugadores = listarJugadores(false);
+  const jugadores = await listarJugadores(false);
   const publicados = jugadores.filter((j) => j.publicado).length;
-  const candidaturas = contarCandidaturas();
-  const ultimas = listarCandidaturas().slice(0, 5);
+  const candidaturas = await contarCandidaturas();
+  const ultimas = (await listarCandidaturas()).slice(0, 5);
 
   const sinFoto = jugadores.filter((j) => !j.imagen).length;
-  const placeholders = listarTestimonios(false).filter((t) => t.texto.es.startsWith('['));
+  const testimonios = await listarTestimonios(false);
+  const clubes = await listarClubes(false);
+  const placeholders = testimonios.filter((t) => t.texto.es.startsWith('['));
 
   return (
     <>
@@ -40,11 +42,11 @@ export default async function Resumen({ params }: { params: Promise<{ lang: stri
           <span>Candidaturas pendientes</span>
         </Link>
         <Link className="cifra" href={`${base}/testimonios`}>
-          <b>{listarTestimonios(false).length}</b>
+          <b>{testimonios.length}</b>
           <span>Testimonios</span>
         </Link>
         <Link className="cifra" href={`${base}/clubes`}>
-          <b>{listarClubes(false).length}</b>
+          <b>{clubes.length}</b>
           <span>Clubes</span>
         </Link>
       </div>

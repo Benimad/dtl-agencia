@@ -31,8 +31,8 @@ export default async function AdminCandidaturas({
   const activo = ESTADOS.includes(filtro as EstadoCandidatura)
     ? (filtro as EstadoCandidatura)
     : undefined;
-  const candidaturas = listarCandidaturas(activo);
-  const contacto = obtenerContacto();
+  const candidaturas = await listarCandidaturas(activo);
+  const contacto = await obtenerContacto();
 
   return (
     <>

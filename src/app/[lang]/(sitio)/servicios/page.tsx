@@ -39,7 +39,7 @@ export default async function PaginaServicios({
       />
       <Servicios locale={lang} dic={dic} conCabecera={false} conDetalle />
       <Proceso locale={lang} dic={dic} />
-      <CintaCta locale={lang} dic={dic} whatsappUrl={obtenerContacto().whatsappUrl} />
+      <CintaCta locale={lang} dic={dic} whatsappUrl={(await obtenerContacto()).whatsappUrl} />
     </>
   );
 }

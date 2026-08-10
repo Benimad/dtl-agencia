@@ -1,7 +1,16 @@
 import Image from 'next/image';
 import type { Imagen } from '@/lib/db/esquema';
 
+/**
+ * Dónde vive una foto. Con Supabase, en su Storage público; sin él, la
+ * sirve nuestra propia ruta /media desde el disco del servidor.
+ */
 export function rutaMedia(imagen: Imagen): string {
+  const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabase) {
+    const cubo = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || 'carteles';
+    return `${supabase.replace(/\/$/, '')}/storage/v1/object/public/${cubo}/${imagen.archivo}`;
+  }
   return `/media/${encodeURIComponent(imagen.archivo)}`;
 }
 

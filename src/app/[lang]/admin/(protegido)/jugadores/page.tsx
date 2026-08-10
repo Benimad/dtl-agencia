@@ -13,7 +13,7 @@ export default async function AdminJugadores({
 }) {
   const { lang } = await params;
   const base = `/${lang}/admin/jugadores`;
-  const jugadores = listarJugadores(false);
+  const jugadores = await listarJugadores(false);
 
   return (
     <>

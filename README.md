@@ -28,7 +28,8 @@ npm run typecheck  # TypeScript sin emitir
 | Variable | Para qué |
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Dominio real. SEO, sitemap y Open Graph. |
-| `AUTH_SECRET` | Firma las sesiones del panel. **Obligatoria en producción**, mínimo 32 caracteres. |
+| `AUTH_SECRET` | Firma las sesiones del panel. Mínimo 32 caracteres. Sin ella el panel funciona, pero cierra la sesión en cada despliegue. |
+| `NEXT_PUBLIC_SUPABASE_URL` · `SUPABASE_SERVICE_ROLE_KEY` | Base de datos. Imprescindibles en Vercel — mira más abajo. |
 | `CANDIDATURA_WEBHOOK_URL` | Opcional. Webhook al que se reenvía cada candidatura. |
 
 ## El panel — `/[idioma]/admin`
@@ -49,22 +50,40 @@ cada visita, no hay que volver a desplegar.
 con HMAC-SHA256, y toda acción de escritura vuelve a comprobar la sesión en el servidor —
 nunca se fía de lo que llegue en el formulario. El panel va con `noindex`.
 
-## ⚠️ Dónde se guardan los datos (léelo antes de desplegar)
+## Dónde se guardan los datos
 
-El contenido vive en `data/db.json` y las fotos en `data/uploads/`, en el disco del servidor.
-Va perfecto en local y en cualquier VPS o contenedor con disco propio.
+Hay dos backends y el código elige solo:
 
-**En Vercel no sirve para producción.** Vercel borra el disco en cada despliegue: la agencia
-metería veinte fichas y las perdería al publicar la siguiente versión. El panel detecta que
-está en Vercel y muestra el aviso, pero conviene saberlo antes:
+| Cuándo | Dónde guarda |
+| --- | --- |
+| Con las variables de Supabase puestas | Postgres de Supabase + Storage para los carteles |
+| Sin ellas | `data/db.json` y `data/uploads/` en el disco del servidor |
 
-- **Para enseñar la web y probar el panel** → Vercel vale.
-- **Para trabajar de verdad** → o se aloja en un servidor con disco (VPS, Railway, Render,
-  Fly.io…), o se cambia el almacén por una base de datos gestionada.
+**En Vercel hay que usar Supabase, no es opcional.** Vercel no da disco: cada
+petición puede caer en una instancia distinta con su `/tmp` vacío, así que sin base
+de datos el panel pierde hasta la cuenta de administración a los pocos segundos.
 
-Cambiarlo es acotado a propósito: todo el acceso a datos pasa por `src/lib/db/`. Hay que
-reescribir `almacen.ts` (Postgres en vez de archivo) y `src/acciones/subir.ts` (S3, Vercel
-Blob, Cloudinary… en vez de disco). El resto del código no se entera.
+### Montar Supabase (una vez, 5 minutos)
+
+1. Crea un proyecto en [supabase.com](https://supabase.com) (el plan gratuito llega).
+2. **SQL Editor → New query** → pega `supabase/schema.sql` entero → **Run**.
+3. **Storage → New bucket** → nombre `carteles` → marca **Public bucket**.
+4. **Settings → API** y copia dos valores a las variables de entorno del hosting:
+
+   | Variable | Qué copiar |
+   | --- | --- |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
+   | `SUPABASE_SERVICE_ROLE_KEY` | `service_role` (la secreta, **no** la `anon`) |
+
+5. Vuelve a desplegar.
+
+La primera visita siembra la base con los tres fichajes que ya estaban publicados,
+los clubes y los textos, y sube sus carteles al bucket. La agencia se encuentra la
+web como estaba y a partir de ahí manda ella.
+
+La `service_role` salta las políticas de seguridad de Supabase: vive solo en el
+servidor y nunca llega al navegador. Por eso el esquema deja RLS activado y sin
+políticas — ninguna otra clave puede tocar esas tablas.
 
 ## Páginas públicas
 
@@ -90,7 +109,7 @@ Blob, Cloudinary… en vez de disco). El resto del código no se entera.
 | Cambiar textos fijos de la web (secciones, servicios, legales) | `src/i18n/dictionaries/{es,fr,ar}.ts` |
 | Cambiar colores o tipografías | `src/styles/tokens.css` |
 | Añadir un idioma | `src/i18n/config.ts` + un diccionario nuevo |
-| Cambiar dónde se guardan los datos | `src/lib/db/almacen.ts` |
+| Cambiar el backend de datos | `src/lib/db/index.ts` elige; `archivo.ts` y `supabase.ts` implementan |
 | Cambiar dónde se guardan las fotos | `src/acciones/subir.ts` |
 
 Los fichajes, testimonios, clubes y datos de contacto **ya no están en el código**: se
@@ -140,7 +159,7 @@ src/
 - [ ] Completar los datos del titular en el aviso legal y la política de privacidad: los
       `[completar]` de `src/i18n/dictionaries/`.
 - [ ] Poner `NEXT_PUBLIC_SITE_URL` con el dominio definitivo.
-- [ ] Decidir el alojamiento definitivo (ver el aviso sobre `data/` más arriba).
+- [ ] Montar Supabase si la web vive en Vercel (ver más arriba).
 - [ ] Si hay licencia FIFA/RFEF, descomentar la línea del pie en
       `src/components/layout/Footer.tsx`.
 

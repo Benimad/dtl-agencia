@@ -18,7 +18,7 @@ export default async function LayoutSitio({
   // El layout de idioma ya ha rechazado cualquier valor que no sea es/fr/ar.
   const lang = (await params).lang as Locale;
   const dic = getDictionary(lang);
-  const contacto = obtenerContacto();
+  const contacto = await obtenerContacto();
 
   const datosEstructurados = {
     '@context': 'https://schema.org',

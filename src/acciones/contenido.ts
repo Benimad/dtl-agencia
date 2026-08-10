@@ -51,11 +51,14 @@ function multiidioma(datos: FormData, prefijo: string): TextoMultiidioma {
  * Ejecuta un cambio. Si el servidor no puede guardar (disco de solo lectura),
  * devuelve el motivo en vez de reventar la página con un error de Next.
  */
-function guardar<T>(fn: () => T): { valor?: T; error?: string } {
+async function guardar<T>(fn: () => Promise<T>): Promise<{ valor?: T; error?: string }> {
   try {
-    return { valor: fn() };
+    return { valor: await fn() };
   } catch (error) {
     if (error instanceof ErrorSoloLectura) return { error: error.message };
+    // Cualquier otro fallo del almacén (Supabase caído, tabla que falta…)
+    // se enseña tal cual: es más útil que una página en blanco.
+    if (error instanceof Error) return { error: error.message };
     throw error;
   }
 }
@@ -114,16 +117,16 @@ export async function guardarJugador(
   const lang = texto(datos, 'lang') || 'es';
 
   if (existente) {
-    const anterior = obtenerJugador(existente);
+    const anterior = await obtenerJugador(existente);
     if (!anterior) return { error: 'Ese jugador ya no existe.' };
 
-    const { error } = guardar(() => actualizarJugador(existente, campos, imagen));
+    const { error } = await guardar(() => actualizarJugador(existente, campos, imagen));
     if (error) return { error };
 
     // La foto vieja solo se borra cuando la nueva ya está guardada.
-    if (imagen !== undefined && anterior.imagen) borrarFoto(anterior.imagen);
+    if (imagen !== undefined && anterior.imagen) await borrarFoto(anterior.imagen);
   } else {
-    const { error } = guardar(() => crearJugador(campos, imagen ?? null));
+    const { error } = await guardar(() => crearJugador(campos, imagen ?? null));
     if (error) return { error };
   }
 
@@ -133,23 +136,23 @@ export async function guardarJugador(
 
 export async function eliminarJugador(datos: FormData) {
   await exigirSesionAccion();
-  const { valor, error } = guardar(() => borrarJugador(id(datos)));
+  const { valor, error } = await guardar(() => borrarJugador(id(datos)));
   if (error) return;
-  if (valor) borrarFoto(valor.imagen);
+  if (valor) await borrarFoto(valor.imagen);
   refrescar();
 }
 
 export async function ordenarJugador(datos: FormData) {
   await exigirSesionAccion();
-  guardar(() => moverJugador(id(datos), Number(datos.get('salto')) || 0));
+  await guardar(() => moverJugador(id(datos), Number(datos.get('salto')) || 0));
   refrescar();
 }
 
 export async function publicarJugador(datos: FormData) {
   await exigirSesionAccion();
-  const jugador = obtenerJugador(id(datos));
+  const jugador = await obtenerJugador(id(datos));
   if (!jugador) return;
-  guardar(() => actualizarJugador(jugador.id, { ...jugador, publicado: !jugador.publicado }));
+  await guardar(() => actualizarJugador(jugador.id, { ...jugador, publicado: !jugador.publicado }));
   refrescar();
 }
 
@@ -170,7 +173,7 @@ export async function guardarTestimonio(
   if (!contenido.texto.es) return { error: 'El testimonio en español es obligatorio.' };
 
   const existente = id(datos);
-  const { error } = guardar(() =>
+  const { error } = await guardar(() =>
     existente ? actualizarTestimonio(existente, contenido) : crearTestimonio(contenido),
   );
   if (error) return { error };
@@ -181,13 +184,13 @@ export async function guardarTestimonio(
 
 export async function eliminarTestimonio(datos: FormData) {
   await exigirSesionAccion();
-  guardar(() => borrarTestimonio(id(datos)));
+  await guardar(() => borrarTestimonio(id(datos)));
   refrescar();
 }
 
 export async function ordenarTestimonio(datos: FormData) {
   await exigirSesionAccion();
-  guardar(() => moverTestimonio(id(datos), Number(datos.get('salto')) || 0));
+  await guardar(() => moverTestimonio(id(datos), Number(datos.get('salto')) || 0));
   refrescar();
 }
 
@@ -203,9 +206,10 @@ export async function guardarClub(
   if (!nombre) return { error: 'Escribe el nombre del club.' };
 
   const existente = id(datos);
-  const { error } = guardar(() =>
-    existente ? actualizarClub(existente, nombre, marcado(datos, 'publicado')) : crearClub(nombre),
-  );
+  const { error } = await guardar(async () => {
+    if (existente) await actualizarClub(existente, nombre, marcado(datos, 'publicado'));
+    else await crearClub(nombre);
+  });
   if (error) return { error };
 
   refrescar();
@@ -214,13 +218,13 @@ export async function guardarClub(
 
 export async function eliminarClub(datos: FormData) {
   await exigirSesionAccion();
-  guardar(() => borrarClub(id(datos)));
+  await guardar(() => borrarClub(id(datos)));
   refrescar();
 }
 
 export async function ordenarClub(datos: FormData) {
   await exigirSesionAccion();
-  guardar(() => moverClub(id(datos), Number(datos.get('salto')) || 0));
+  await guardar(() => moverClub(id(datos), Number(datos.get('salto')) || 0));
   refrescar();
 }
 
@@ -232,7 +236,7 @@ export async function cambiarEstadoCandidatura(datos: FormData) {
   await exigirSesionAccion();
   const estado = texto(datos, 'estado') as EstadoCandidatura;
   if (!ESTADOS.includes(estado)) return;
-  guardar(() => actualizarCandidatura(id(datos), { estado, leida: true }));
+  await guardar(() => actualizarCandidatura(id(datos), { estado, leida: true }));
   revalidatePath('/[lang]/admin/candidaturas', 'page');
 }
 
@@ -241,7 +245,7 @@ export async function guardarNotas(
   datos: FormData,
 ): Promise<EstadoFormulario> {
   await exigirSesionAccion();
-  const { error } = guardar(() =>
+  const { error } = await guardar(() =>
     actualizarCandidatura(id(datos), { notas: texto(datos, 'notas'), leida: true }),
   );
   return error ? { error } : { ok: 'Nota guardada.' };
@@ -249,7 +253,7 @@ export async function guardarNotas(
 
 export async function eliminarCandidatura(datos: FormData) {
   await exigirSesionAccion();
-  guardar(() => borrarCandidatura(id(datos)));
+  await guardar(() => borrarCandidatura(id(datos)));
   revalidatePath('/[lang]/admin/candidaturas', 'page');
 }
 
@@ -269,7 +273,7 @@ export async function guardarAjustes(
   const email = texto(datos, 'email');
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: 'Ese email no es válido.' };
 
-  const { error } = guardar(() =>
+  const { error } = await guardar(() =>
     actualizarAjustes({
       whatsapp,
       whatsappVisible: texto(datos, 'whatsappVisible') || `+${whatsapp}`,
@@ -303,6 +307,6 @@ export async function cambiarMiClave(
   if (debil) return { error: debil };
 
   const cifrada = await cifrarClave(nueva);
-  const { error } = guardar(() => cambiarClave(usuario.id, cifrada));
+  const { error } = await guardar(() => cambiarClave(usuario.id, cifrada));
   return error ? { error } : { ok: 'Contraseña cambiada.' };
 }

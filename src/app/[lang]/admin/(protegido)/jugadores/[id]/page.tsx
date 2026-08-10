@@ -13,7 +13,7 @@ export default async function EditarJugador({
   params: Promise<{ lang: string; id: string }>;
 }) {
   const { lang, id } = await params;
-  const jugador = obtenerJugador(id);
+  const jugador = await obtenerJugador(id);
   if (!jugador) notFound();
 
   const locale = isLocale(lang) ? lang : defaultLocale;

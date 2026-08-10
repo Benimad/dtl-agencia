@@ -35,7 +35,7 @@ export default async function PaginaProceso({ params }: { params: Promise<{ lang
       />
       <Proceso locale={lang} dic={dic} conCabecera={false} conDetalle />
       <Mercados locale={lang} dic={dic} />
-      <CintaCta locale={lang} dic={dic} whatsappUrl={obtenerContacto().whatsappUrl} />
+      <CintaCta locale={lang} dic={dic} whatsappUrl={(await obtenerContacto()).whatsappUrl} />
     </>
   );
 }

@@ -31,7 +31,7 @@ export async function entrar(
 
   if (!email || !clave) return { error: 'Escribe tu email y tu contraseña.' };
 
-  const usuario = buscarUsuarioPorEmail(email);
+  const usuario = await buscarUsuarioPorEmail(email);
   if (!usuario || !(await verificarClave(clave, usuario.clave))) {
     return { error: 'Email o contraseña incorrectos.' };
   }
@@ -48,7 +48,7 @@ export async function crearPrimerAdmin(
   _estado: EstadoAcceso,
   datos: FormData,
 ): Promise<EstadoAcceso> {
-  if (contarUsuarios() > 0) return { error: 'Ya existe una cuenta de administración.' };
+  if ((await contarUsuarios()) > 0) return { error: 'Ya existe una cuenta de administración.' };
 
   const lang = idiomaSeguro(datos.get('lang'));
   const nombre = String(datos.get('nombre') ?? '').trim();
@@ -67,7 +67,7 @@ export async function crearPrimerAdmin(
 
   let usuario;
   try {
-    usuario = crearUsuario(email, nombre, cifrada);
+    usuario = await crearUsuario(email, nombre, cifrada);
   } catch (error) {
     if (error instanceof ErrorSoloLectura) return { error: error.message };
     throw error;

@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, id } = await params;
-  const jugador = obtenerJugadorPorSlug(id);
+  const jugador = await obtenerJugadorPorSlug(id);
   if (!jugador) return {};
 
   const dic = getDictionary(lang);
@@ -56,12 +56,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PaginaJugador({ params }: Props) {
   const { lang, id } = await params;
-  const jugador = obtenerJugadorPorSlug(id);
+  const jugador = await obtenerJugadorPorSlug(id);
   if (!jugador) notFound();
 
   const dic = getDictionary(lang);
-  const contacto = obtenerContacto();
-  const otros = listarJugadores().filter((j) => j.id !== jugador.id);
+  const contacto = await obtenerContacto();
+  const otros = (await listarJugadores()).filter((j) => j.id !== jugador.id);
 
   const datos = (
     [

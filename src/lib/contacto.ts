@@ -4,8 +4,8 @@ import { enlaceWa, type Contacto } from '@/data/site';
 import { obtenerAjustes } from '@/lib/db';
 
 /** Datos de contacto tal y como están guardados en el panel. */
-export function obtenerContacto(): Contacto {
-  const a = obtenerAjustes();
+export async function obtenerContacto(): Promise<Contacto> {
+  const a = await obtenerAjustes();
   return {
     whatsapp: a.whatsapp,
     whatsappVisible: a.whatsappVisible,

@@ -38,9 +38,9 @@ export default async function PaginaFichajes({
         titulo={dic.cartelera.titulo}
         lead={dic.cartelera.sub}
       />
-      <Cartelera locale={lang} dic={dic} jugadores={listarJugadores()} conCabecera={false} />
-      <Testimonios locale={lang} dic={dic} testimonios={listarTestimonios()} />
-      <CintaCta locale={lang} dic={dic} whatsappUrl={obtenerContacto().whatsappUrl} />
+      <Cartelera locale={lang} dic={dic} jugadores={await listarJugadores()} conCabecera={false} />
+      <Testimonios locale={lang} dic={dic} testimonios={await listarTestimonios()} />
+      <CintaCta locale={lang} dic={dic} whatsappUrl={(await obtenerContacto()).whatsappUrl} />
     </>
   );
 }

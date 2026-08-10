@@ -6,7 +6,7 @@ import { listarTestimonios } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminTestimonios() {
-  const testimonios = listarTestimonios(false);
+  const testimonios = await listarTestimonios(false);
   const ejemplos = testimonios.filter((t) => t.texto.es.startsWith('['));
 
   return (

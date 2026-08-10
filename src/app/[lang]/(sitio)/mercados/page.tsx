@@ -27,7 +27,7 @@ export default async function PaginaMercados({
 }) {
   const { lang } = await params;
   const dic = getDictionary(lang);
-  const contacto = obtenerContacto();
+  const contacto = await obtenerContacto();
 
   return (
     <>
@@ -43,7 +43,7 @@ export default async function PaginaMercados({
       <Clubes
         locale={lang}
         dic={dic}
-        clubes={listarClubes()}
+        clubes={await listarClubes()}
         extra={contacto.clubesExtra[lang]}
       />
       <CintaCta locale={lang} dic={dic} whatsappUrl={contacto.whatsappUrl} />

@@ -16,11 +16,11 @@ const PAGINAS: RouteKey[] = [
   'privacidad',
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entradas: MetadataRoute.Sitemap = [];
   const base = urlSitio();
   const ahora = new Date();
-  const jugadores = listarJugadores();
+  const jugadores = await listarJugadores();
 
   for (const locale of locales) {
     for (const pagina of PAGINAS) {

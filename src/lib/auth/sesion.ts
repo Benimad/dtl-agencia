@@ -125,5 +125,5 @@ export async function usuarioActual(): Promise<Usuario | null> {
   const contenido = leerFicha(ficha);
   if (!contenido) return null;
 
-  return obtenerUsuario(contenido.id) ?? null;
+  return (await obtenerUsuario(contenido.id)) ?? null;
 }

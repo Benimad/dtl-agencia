@@ -19,8 +19,8 @@ export const dynamic = 'force-dynamic';
 export default async function Portada({ params }: { params: Promise<{ lang: Locale }> }) {
   const { lang } = await params;
   const dic = getDictionary(lang);
-  const jugadores = listarJugadores();
-  const contacto = obtenerContacto();
+  const jugadores = await listarJugadores();
+  const contacto = await obtenerContacto();
 
   return (
     <>
@@ -29,14 +29,14 @@ export default async function Portada({ params }: { params: Promise<{ lang: Loca
       <Clubes
         locale={lang}
         dic={dic}
-        clubes={listarClubes()}
+        clubes={await listarClubes()}
         extra={contacto.clubesExtra[lang]}
       />
       <Cartelera locale={lang} dic={dic} jugadores={jugadores} />
       <Servicios locale={lang} dic={dic} />
       <Proceso locale={lang} dic={dic} />
       <Mercados locale={lang} dic={dic} />
-      <Testimonios locale={lang} dic={dic} testimonios={listarTestimonios()} />
+      <Testimonios locale={lang} dic={dic} testimonios={await listarTestimonios()} />
       <BloqueCandidatura locale={lang} dic={dic} whatsapp={contacto.whatsapp} />
       <BloqueContacto dic={dic} contacto={contacto} />
     </>

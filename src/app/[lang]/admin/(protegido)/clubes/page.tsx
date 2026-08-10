@@ -6,7 +6,7 @@ import { listarClubes } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminClubes() {
-  const clubes = listarClubes(false);
+  const clubes = await listarClubes(false);
 
   return (
     <>

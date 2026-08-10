@@ -4,6 +4,8 @@ const nextConfig = {
   poweredByHeader: false,
   images: {
     formats: ['image/avif', 'image/webp'],
+    // Los carteles viven en el Storage de Supabase cuando está configurado.
+    remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' }],
   },
   // Las fotos de arranque se copian en tiempo de ejecución, así que el rastreo
   // automático no las ve: hay que meterlas en el paquete a mano.

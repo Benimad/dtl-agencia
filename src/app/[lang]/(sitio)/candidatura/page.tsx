@@ -26,7 +26,7 @@ export default async function PaginaCandidatura({
 }) {
   const { lang } = await params;
   const dic = getDictionary(lang);
-  const contacto = obtenerContacto();
+  const contacto = await obtenerContacto();
 
   return (
     <>

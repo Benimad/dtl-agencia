@@ -17,7 +17,7 @@ export default async function PaginaAcceso({
   // Si ya hay sesión no tiene sentido pedir la contraseña otra vez.
   if (await usuarioActual()) redirect(`/${lang}/admin`);
 
-  const primeraVez = contarUsuarios() === 0;
+  const primeraVez = (await contarUsuarios()) === 0;
 
   return (
     <div className="acceso">

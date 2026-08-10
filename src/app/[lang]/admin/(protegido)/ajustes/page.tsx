@@ -4,7 +4,7 @@ import { obtenerAjustes } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminAjustes() {
-  const ajustes = obtenerAjustes();
+  const ajustes = await obtenerAjustes();
 
   return (
     <>

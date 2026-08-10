@@ -16,7 +16,7 @@ export default async function LayoutPanel({
 }) {
   const { lang } = await params;
   const usuario = await exigirSesion(lang);
-  const { sinLeer } = contarCandidaturas();
+  const { sinLeer } = await contarCandidaturas();
 
   return (
     <div className="admin">

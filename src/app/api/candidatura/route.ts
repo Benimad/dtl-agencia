@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   // su ficha sigue llegando por WhatsApp y por el webhook.
   let guardada;
   try {
-    guardada = crearCandidatura(ficha_datos);
+    guardada = await crearCandidatura(ficha_datos);
   } catch (error) {
     if (!(error instanceof ErrorSoloLectura)) throw error;
     console.warn('[candidatura] no se ha podido guardar en la base:', error.message);
